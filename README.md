@@ -1,4 +1,4 @@
-# 🧬 HELIX: The Multi-Agent Intelligence Hub
+# 🧬 HELIX - HEterogeneous LLM Integrated eXchange
 
 <p align="center">
   <img src="./Design/exports/helix-mark.png" width="200" />
