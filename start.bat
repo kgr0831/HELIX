@@ -2,10 +2,10 @@
 title HELIX - Heterogeneous LLM Integrated eXchange
 
 echo [1/3] Starting Backend (FastAPI)...
-start /B cmd /C "cd /d C:\CrossCheckAI && venv\Scripts\python.exe -m uvicorn backend.main:app --port 8000 2>nul"
+start /B cmd /C "cd /d C:\HELIX && venv\Scripts\python.exe -m uvicorn backend.main:app --port 8000 2>nul"
 
 echo [2/3] Starting Frontend (Vite)...
-start /B cmd /C "cd /d C:\CrossCheckAI\frontend && npm run dev 2>nul"
+start /B cmd /C "cd /d C:\HELIX\frontend && npm run dev 2>nul"
 
 echo [3/3] Waiting for servers to start...
 timeout /t 4 /nobreak >nul

@@ -45,7 +45,7 @@ export default function App() {
         </span>
         <span className="tb-pill">
           <span>Mode</span>
-          <strong>Debate · 3 rounds</strong>
+          <strong>Debate · 4 rounds</strong>
           <Chevron />
         </span>
         <button className="tb-btn primary" onClick={handleNewChat}><Plus />새 토론</button>

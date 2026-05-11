@@ -86,7 +86,7 @@ interface TurnData {
 }
 
 // ── Turn: 개별 에이전트 사고 과정 ──
-function Turn({ turn, onComplete }: { turn: TurnData; onComplete?: () => void }) {
+function Turn({ turn }: { turn: TurnData }) {
   const a: AgentInfo | undefined = AGENTS[turn.agentId];
   if (!a) return null;
 
@@ -106,7 +106,7 @@ function Turn({ turn, onComplete }: { turn: TurnData; onComplete?: () => void })
           )}
         </div>
         <div className="turn-text">
-          <StreamingText text={turn.content} speed={50} onComplete={onComplete} />
+          <StreamingText text={turn.content} speed={50} />
         </div>
       </div>
     </div>
@@ -189,7 +189,7 @@ function groupByRound(events: AgentEvent[], isLive: boolean): { roundId: number;
   if (isLive && groups.length > 0) {
     const lastGroup = groups[groups.length - 1];
     if (lastGroup.label === "분석 · 디스패치" && lastGroup.turns.length > 0) {
-      groups.push({ roundId: currentRound + 1, label: "병렬 토론", turns: [] });
+      groups.push({ roundId: currentRound, label: "병렬 토론", turns: [] });
     }
   }
 
@@ -203,27 +203,10 @@ interface GlassBoxProps {
   totalTokens: number;
   elapsedMs: number;
   statusMessage: string;
-  onAllTurnsComplete: () => void;
 }
 
-function GlassBox({ events, isLive, totalTokens, elapsedMs, statusMessage, onAllTurnsComplete }: GlassBoxProps) {
+function GlassBox({ events, isLive, totalTokens, elapsedMs, statusMessage }: GlassBoxProps) {
   const [expanded, setExpanded] = useState(true);
-  const completedTurnsRef = useRef<Set<string>>(new Set());
-  const handleTurnComplete = (id: string) => {
-    completedTurnsRef.current.add(id);
-    const renderableCount = events.filter(e => e.phase === "planning" || e.phase === "discussion").length;
-    if (!isLive && completedTurnsRef.current.size >= renderableCount) {
-      onAllTurnsComplete();
-    }
-  };
-  useEffect(() => {
-    const renderableCount = events.filter(e => e.phase === "planning" || e.phase === "discussion").length;
-    if (!isLive && renderableCount > 0 && completedTurnsRef.current.size >= renderableCount) {
-      onAllTurnsComplete();
-    }
-  }, [isLive, events, onAllTurnsComplete]);
-
-  // 새로운 질문 시에만 초기화 (Thread에서 제어)
 
   const rounds = groupByRound(events, isLive);
   const hasPlaceholders = rounds.some((r, idx) =>
@@ -237,15 +220,16 @@ function GlassBox({ events, isLive, totalTokens, elapsedMs, statusMessage, onAll
         <div className="gb-title"><Atom /> Glass Box</div>
         {isLive ? (
           <span className="gb-status pulse">{statusMessage}</span>
-        ) : (
-          <span className={`gb-status ${events.some(e => e.phase === "consensus_check" && !e.consensus) ? "fail" : ""}`}>
-            {events.some(e => e.phase === "consensus_check" && !e.consensus) ? (
-              <><Alert />합의 미달</>
-            ) : (
-              <><Check />합의 도달</>
-            )}
-          </span>
-        )}
+        ) : (() => {
+          const consensusEvents = events.filter(e => e.phase === "consensus_check");
+          const lastConsensus = consensusEvents[consensusEvents.length - 1];
+          const isConsensus = lastConsensus?.consensus === true;
+          return (
+            <span className={`gb-status ${isConsensus ? "" : "fail"}`}>
+              {isConsensus ? <><Check />합의 도달</> : <><Alert />합의 미달</>}
+            </span>
+          );
+        })()}
         <div className="gb-stats">
           <span><strong>{events.length}</strong> turns</span>
           {totalTokens > 0 && <span><strong>{totalTokens.toLocaleString()}</strong> tok</span>}
@@ -260,8 +244,8 @@ function GlassBox({ events, isLive, totalTokens, elapsedMs, statusMessage, onAll
               <span>Round {r.roundId}</span>
               <span style={{ color: "var(--fg-dim)", textTransform: "none", letterSpacing: 0 }}>· {r.label}</span>
             </div>
-            {r.turns.map((t, i) => (
-              <Turn key={t.id} turn={t} onComplete={() => handleTurnComplete(t.id)} />
+            {r.turns.map((t) => (
+              <Turn key={t.id} turn={t} />
             ))}
             {isLive && r.label === "분석 · 디스패치" && r.turns.length === 0 && (
               <PlaceholderTurn agentId="gpt" label="역할 분배 중..." />
@@ -351,8 +335,13 @@ export function Thread() {
   useEffect(() => {
     if (isLoading) {
       setAllTypingDone(false);
+      return;
     }
-  }, [isLoading]);
+    if (!isLoading && finalAnswer) {
+      const timer = setTimeout(() => setAllTypingDone(true), 600);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading, finalAnswer]);
 
   useEffect(() => {
     if (threadRef.current) {
@@ -383,7 +372,6 @@ export function Thread() {
             totalTokens={totalTokens}
             elapsedMs={elapsedMs}
             statusMessage={statusMessage}
-            onAllTurnsComplete={() => setAllTypingDone(true)}
           />
         )}
 

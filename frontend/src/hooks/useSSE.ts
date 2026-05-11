@@ -2,14 +2,21 @@
 // 백엔드의 SSE 스트림을 수신하여 실시간으로 토론 이벤트를 처리
 // fetch + ReadableStream 방식으로 POST 요청 후 SSE 이벤트 순차 파싱
 
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { useStore } from "../store/useStore";
 
 export function useSSE() {
   const { setLoading, addEvent, addConsensusRound, setFinalAnswer, setError, setStatusMessage, setElapsedMs, resetThread } = useStore();
+  const abortRef = useRef<AbortController | null>(null);
 
   const startQuery = useCallback(
     async (question: string) => {
+      if (abortRef.current) {
+        abortRef.current.abort();
+      }
+      const controller = new AbortController();
+      abortRef.current = controller;
+
       resetThread();
       setLoading(true);
       const startTime = Date.now();
@@ -19,6 +26,7 @@ export function useSSE() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ question }),
+          signal: controller.signal,
         });
 
         if (!response.ok || !response.body) {
@@ -66,7 +74,7 @@ export function useSSE() {
               } else if (eventType === "agent_response") {
                 addEvent({
                   ...data,
-                  latency_ms: Date.now() - startTime,
+                  latency_ms: data.latency_ms ?? (Date.now() - startTime),
                 });
               } else if (eventType === "consensus_check") {
                 addConsensusRound(data.round);
@@ -90,10 +98,14 @@ export function useSSE() {
           }
         }
       } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") return;
         setError(err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다");
       } finally {
         setElapsedMs(Date.now() - startTime);
         setLoading(false);
+        if (abortRef.current === controller) {
+          abortRef.current = null;
+        }
       }
     },
     [resetThread, setLoading, addEvent, addConsensusRound, setFinalAnswer, setError, setStatusMessage, setElapsedMs]

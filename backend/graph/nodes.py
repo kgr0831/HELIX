@@ -1,7 +1,6 @@
 # nodes.py - LangGraph 노드 함수 정의
 # 각 노드는 토론의 한 단계를 담당 (계획 → 병렬 토론 → 통합 → 최종 답변)
 
-import asyncio
 import re
 
 from backend.agents.leader import LeaderAgent
@@ -81,7 +80,24 @@ async def _call_specific_agent(state: CrossCheckState, agent, role_instruction: 
     remaining = budget.remaining(agent.role)
 
     if remaining <= 0:
-        return {}
+        exhausted_content = "[토큰 예산 소진으로 응답을 생성하지 못했습니다]"
+        return {
+            "agent_responses": {
+                agent.role: {
+                    "agent_name": agent.name,
+                    "role": agent.role,
+                    "content": exhausted_content,
+                    "token_count": 0,
+                    "latency_ms": 0,
+                }
+            },
+            "discussion_log": [{
+                "round_number": round_num,
+                "agent_name": agent.name,
+                "role": agent.role,
+                "content": exhausted_content,
+            }],
+        }
 
     resp = await agent.generate(prompt, max_tokens=remaining)
     
@@ -106,7 +122,6 @@ async def _call_specific_agent(state: CrossCheckState, agent, role_instruction: 
         "agent_responses": agent_responses,
         "discussion_log": [new_entry],
         "token_usage": {agent.role: token_usage.get(agent.role, 0) + resp.token_count},
-        "round_number": round_num,
     }
 
 
@@ -132,17 +147,23 @@ async def leader_synthesize_node(state: CrossCheckState) -> dict:
         f"당신은 {len(responses)}명의 에이전트 토론을 조율하는 오케스트레이터 리더입니다.\n\n"
         f"질문: {question}\n\n"
         f"에이전트 응답:\n{summary}\n\n"
-        f"당신의 임무:\n"
-        f"1. 모든 에이전트의 의견이 일치하는지(Consensus) 엄격히 판단하세요.\n"
-        f"2. 만약 조금이라도 논리적 허점, 역할에 대한 불만, 계획 수정을 요구하는 내용이 있다면 반드시 추가 토론(consensus: false)을 결정하세요.\n"
-        f"3. 에이전트가 자신의 역할 정의가 잘못되었다고 하거나, 다른 에이전트의 역할을 조정해야 한다고 하는 것도 '합의 미달'입니다.\n"
-        f"4. 합의가 되었다면 최종 답변을, 아니면 현재까지의 쟁점을 요약하여 답변하세요.\n\n"
+        f"[합의(Consensus) 판단 기준]\n"
+        f"아래 조건을 모두 충족하면 consensus: true입니다:\n"
+        f"- 핵심 사실(팩트)에 대해 에이전트들이 서로 모순되지 않음\n"
+        f"- 사용자 질문에 대한 답변의 방향이 일치함\n\n"
+        f"아래는 consensus: false가 아닙니다 (무시하세요):\n"
+        f"- 역할 분담/프로세스에 대한 의견 (메타적 비판)\n"
+        f"- 추가 정보가 있으면 좋겠다는 제안\n"
+        f"- 모호성 지적이지만 맥락상 명확한 경우 (예: '뉴욕'은 보통 뉴욕시)\n"
+        f"- 표현 방식이나 상세 수준에 대한 선호 차이\n\n"
+        f"합의가 되었다면 에이전트들의 정보를 종합하여 사용자 질문에 대한 최종 답변을 작성하세요.\n"
+        f"합의가 안 되었다면 어떤 핵심 사실이 서로 모순되는지 구체적으로 설명하세요.\n\n"
         f"반드시 아래 JSON 형식으로만 답변하세요:\n"
-        f"{{\"consensus\": true/false, \"reasoning\": \"합의/미합의 근거\", \"answer\": \"종합 답변 또는 불일치 요약\"}}"
+        f"{{\"consensus\": true/false, \"reasoning\": \"판단 근거\", \"answer\": \"종합 답변 또는 모순 요약\"}}"
     )
 
     response = await leader.generate(prompt, max_tokens=remaining)
-    token_usage["leader"] = token_usage.get("leader", 0) + response.token_count
+    leader_total = token_usage.get("leader", 0) + response.token_count
 
     import json
     try:
@@ -170,26 +191,42 @@ async def leader_synthesize_node(state: CrossCheckState) -> dict:
 
     return {
         "consensus": consensus,
-        "token_usage": token_usage,
+        "token_usage": {"leader": leader_total},
         "discussion_log": [new_entry],
         "round_number": round_num + 1,  # 다음 라운드로 증가
     }
 
 
 async def final_answer_node(state: CrossCheckState) -> dict:
-    """토론 종료 후 최종 답변을 추출하여 반환"""
+    """토론 종료 후 최종 답변을 생성하여 반환.
+    합의 도달: 마지막 Leader 합성 답변을 사용.
+    합의 미달: Leader가 전체 토론을 종합하여 강제 최종 답변 생성."""
+    consensus = state.get("consensus", False)
     log = state.get("discussion_log", [])
-    if log:
-        # Leader의 마지막 발언에서 "ANSWER:" 이후 부분을 추출
+
+    if consensus:
         last_leader = [e for e in log if e["role"] == "leader"]
-        if last_leader:
-            answer = last_leader[-1]["content"].strip()
-        else:
-            answer = "No answer generated."
+        answer = last_leader[-1]["content"].strip() if last_leader else "No answer generated."
     else:
-        answer = "No discussion occurred."
+        from backend.utils.context_compressor import compress_discussion_log
+        discussion_summary = compress_discussion_log(log, max_tokens=2000)
+        question = state["question"]
+
+        prompt = (
+            f"당신은 토론 조율 리더입니다. 에이전트들이 여러 라운드 토론했지만 완전한 합의에 도달하지 못했습니다.\n"
+            f"하지만 토론에서 수집된 정보를 종합하여 사용자에게 최선의 답변을 제공해야 합니다.\n\n"
+            f"질문: {question}\n\n"
+            f"토론 내용:\n{discussion_summary}\n\n"
+            f"위 토론에서 확인된 사실과 합의된 부분을 중심으로, "
+            f"사용자 질문에 대한 최종 답변을 직접 작성하세요.\n"
+            f"답변만 작성하세요. '합의가 안 됐다'는 언급은 하지 마세요."
+        )
+
+        response = await leader.generate(prompt, max_tokens=1000)
+        answer = response.content
 
     return {
         "final_answer": answer,
-        "consensus": state.get("consensus", False),
+        "consensus": consensus,
+        "token_usage": state.get("token_usage", {}),
     }

@@ -11,7 +11,7 @@ def should_continue(state: CrossCheckState):
     
     # 라운드 제한 확인 (안전장치 상향)
     curr_round = state.get("round_number", 1)
-    if curr_round >= state.get("max_rounds", 10):
+    if curr_round >= state.get("max_rounds", 5):
         return "answer_step"
         
     # 합의 미달 시 재토론 진행

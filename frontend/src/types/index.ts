@@ -11,6 +11,7 @@ export interface AgentEvent {
   round_number?: number;
   token_count?: number;
   latency_ms?: number;
+  consensus?: boolean;
 }
 
 export interface ConsensusEvent {
