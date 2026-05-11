@@ -1,0 +1,863 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<title>HELIX — 합의된 답을 주는 AI</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+<style>
+  body { overflow-x: hidden; overflow-y: auto; }
+  .nav {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: blur(12px);
+    background: color-mix(in oklch, var(--bg) 75%, transparent);
+    border-bottom: 1px solid var(--border);
+    height: 56px;
+    display: flex; align-items: center;
+  }
+  .nav-inner {
+    max-width: 1200px; margin: 0 auto; width: 100%; padding: 0 28px;
+    display: flex; align-items: center; gap: 28px;
+  }
+  .nav .brand { border: none; padding: 0; height: auto; width: auto; }
+  .nav-links { display: flex; gap: 22px; }
+  .nav-links a { color: var(--fg-muted); text-decoration: none; font-size: 13px; }
+  .nav-links a:hover { color: var(--fg); }
+  .nav-cta { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+
+  .hero {
+    max-width: 1200px; margin: 0 auto;
+    padding: 88px 28px 64px; text-align: center; position: relative;
+  }
+  .hero::before {
+    content: ""; position: absolute; left: 50%; top: 0; transform: translateX(-50%);
+    width: 1000px; height: 600px;
+    background: radial-gradient(closest-side, var(--accent-dim), transparent 70%);
+    pointer-events: none; z-index: -1;
+  }
+  .hero-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 5px 12px 5px 5px; border: 1px solid var(--border);
+    border-radius: 999px; font-size: 12px; color: var(--fg-muted);
+    background: var(--surface);
+  }
+  .hero-eyebrow .tag {
+    background: var(--accent-dim); color: var(--accent);
+    padding: 3px 8px; border-radius: 999px;
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .hero h1 {
+    font-size: clamp(40px, 6vw, 76px);
+    font-weight: 700; letter-spacing: -0.035em; line-height: 1.05;
+    margin: 22px auto 18px; max-width: 900px;
+  }
+  .hero h1 em { font-style: normal; color: var(--accent); }
+  .hero p {
+    font-size: 18px; color: var(--fg-muted);
+    max-width: 620px; margin: 0 auto; line-height: 1.55;
+  }
+  .hero-cta { display: inline-flex; gap: 10px; margin-top: 28px; }
+  .cta-primary {
+    height: 44px; padding: 0 22px;
+    background: var(--accent); color: oklch(0.18 0.05 142);
+    border-radius: var(--r-md); font-weight: 600; font-size: 14px;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .cta-secondary {
+    height: 44px; padding: 0 18px;
+    border: 1px solid var(--border); color: var(--fg);
+    border-radius: var(--r-md); font-size: 14px;
+    background: var(--surface);
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .cta-secondary:hover { border-color: var(--border-strong); }
+
+  .hero-meta {
+    margin-top: 28px;
+    display: inline-flex; gap: 20px; align-items: center;
+    font-size: 12px; color: var(--fg-faint); font-family: var(--font-mono);
+  }
+  .hero-meta .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--border-strong); }
+
+  /* model logos strip */
+  .strip {
+    max-width: 1100px; margin: 56px auto 0; padding: 0 28px;
+    text-align: center;
+  }
+  .strip-label {
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--fg-faint); margin-bottom: 18px;
+  }
+  .strip-models {
+    display: flex; flex-wrap: wrap; gap: 8px 14px;
+    justify-content: center; align-items: center;
+  }
+  .strip-models .m {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 14px; border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    font-size: 13px; color: var(--fg-muted);
+    background: var(--surface);
+  }
+  .strip-models .m .sw { width: 14px; height: 14px; border-radius: 3px; }
+
+  /* hero demo card */
+  .demo {
+    max-width: 1080px; margin: 64px auto 0; padding: 0 28px;
+  }
+  .demo-frame {
+    border: 1px solid var(--border);
+    border-radius: var(--r-xl);
+    background: var(--bg-elev);
+    overflow: hidden;
+    box-shadow: 0 40px 120px -40px rgba(0,0,0,0.6), 0 0 0 1px var(--border);
+  }
+  .demo-chrome {
+    height: 36px; padding: 0 14px;
+    display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .demo-chrome .dots { display: flex; gap: 6px; }
+  .demo-chrome .dots span { width: 10px; height: 10px; border-radius: 50%; background: var(--border-strong); }
+  .demo-chrome .url {
+    margin-left: 18px; font-family: var(--font-mono);
+    font-size: 11px; color: var(--fg-faint);
+  }
+  .demo-chrome .url span { color: var(--fg-muted); }
+  .demo-body { padding: 28px 32px 26px; display: flex; flex-direction: column; gap: 16px; }
+  .d-user {
+    align-self: flex-end; max-width: 70%;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 10px 14px; font-size: 13.5px;
+  }
+  .d-discuss {
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg); background: var(--bg);
+    padding: 12px 16px; display: flex; flex-direction: column; gap: 10px;
+  }
+  .d-discuss-head {
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--fg-faint);
+  }
+  .d-discuss-head .live { color: var(--accent); display: inline-flex; align-items: center; gap: 6px; }
+  .d-discuss-head .live .pulse {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-dim);
+  }
+  .d-turn { display: grid; grid-template-columns: 22px 1fr; gap: 10px; align-items: start; }
+  .d-turn .av {
+    width: 22px; height: 22px; border-radius: var(--r-xs);
+    display: grid; place-items: center;
+    font-family: var(--font-mono); font-weight: 700; font-size: 9px;
+    color: oklch(0.15 0.02 260);
+  }
+  .d-turn .head { display: flex; gap: 6px; font-size: 11.5px; align-items: center; }
+  .d-turn .head b { color: var(--fg); }
+  .d-turn .head .mod { font-family: var(--font-mono); color: var(--fg-faint); font-size: 10px; }
+  .d-turn .body { font-size: 12.5px; color: var(--fg-muted); margin-top: 2px; line-height: 1.45; }
+  .d-final {
+    border: 1px solid var(--accent-line); background: var(--accent-dim);
+    border-radius: var(--r-lg); padding: 12px 16px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .d-final .badge {
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--accent);
+  }
+  .d-final .score {
+    margin-left: auto; font-family: var(--font-mono);
+    font-size: 11px; color: var(--accent); font-weight: 600;
+  }
+  .d-final .text { color: var(--fg); font-size: 13px; flex: 1; }
+
+  /* sections */
+  .section { max-width: 1200px; margin: 0 auto; padding: 96px 28px; }
+  .section-title {
+    text-align: center; max-width: 760px; margin: 0 auto 56px;
+  }
+  .section-eyebrow {
+    font-family: var(--font-mono); font-size: 11px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 14px;
+  }
+  .section-title h2 {
+    font-size: clamp(28px, 4vw, 44px);
+    font-weight: 600; letter-spacing: -0.025em;
+    margin: 0 0 14px; line-height: 1.15;
+  }
+  .section-title p { color: var(--fg-muted); font-size: 16px; line-height: 1.55; }
+
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 880px) { .grid-3 { grid-template-columns: 1fr; } }
+  .card {
+    border: 1px solid var(--border); border-radius: var(--r-lg);
+    padding: 22px 22px 24px;
+    background: var(--bg-elev);
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .card-num {
+    width: 26px; height: 26px; border-radius: 50%;
+    border: 1px solid var(--accent-line); color: var(--accent);
+    background: var(--accent-dim);
+    display: grid; place-items: center;
+    font-family: var(--font-mono); font-size: 11px; font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .card h3 { font-size: 17px; font-weight: 600; margin: 0; letter-spacing: -0.015em; }
+  .card p { color: var(--fg-muted); font-size: 13.5px; line-height: 1.55; margin: 0; }
+  .card .tech {
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--fg-faint); margin-top: auto; padding-top: 10px;
+  }
+
+  /* problem / before-after */
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 880px) { .compare { grid-template-columns: 1fr; } }
+  .compare-card {
+    border: 1px solid var(--border); border-radius: var(--r-lg);
+    padding: 22px; background: var(--bg-elev);
+  }
+  .compare-card.bad { opacity: 0.85; }
+  .compare-card h4 {
+    font-size: 12px; font-family: var(--font-mono);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--fg-faint); margin: 0 0 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .compare-card.bad h4 .pip { width: 8px; height: 8px; border-radius: 50%; background: var(--danger); }
+  .compare-card.good h4 { color: var(--accent); }
+  .compare-card.good h4 .pip { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  .compare-list { display: flex; flex-direction: column; gap: 10px; }
+  .compare-row {
+    display: grid; grid-template-columns: 16px 1fr;
+    gap: 10px; font-size: 13.5px;
+  }
+  .compare-row .ico {
+    width: 16px; height: 16px; display: grid; place-items: center;
+    color: var(--fg-faint); font-family: var(--font-mono); font-size: 11px;
+  }
+  .compare-card.good .compare-row .ico { color: var(--accent); }
+
+  /* features wide */
+  .feat {
+    border: 1px solid var(--border); border-radius: var(--r-xl);
+    overflow: hidden; background: var(--bg-elev);
+    display: grid; grid-template-columns: 1fr 1fr; align-items: stretch;
+    margin-bottom: 16px;
+  }
+  .feat.reverse { grid-template-columns: 1fr 1fr; }
+  .feat.reverse .feat-text { order: 2; }
+  @media (max-width: 880px) { .feat, .feat.reverse { grid-template-columns: 1fr; } .feat.reverse .feat-text { order: 0; } }
+  .feat-text { padding: 44px 40px; display: flex; flex-direction: column; gap: 14px; justify-content: center; }
+  .feat-text .label {
+    font-family: var(--font-mono); font-size: 11px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent);
+  }
+  .feat-text h3 {
+    font-size: clamp(22px, 2.4vw, 30px);
+    font-weight: 600; letter-spacing: -0.02em;
+    margin: 0; line-height: 1.2;
+  }
+  .feat-text p { color: var(--fg-muted); font-size: 14.5px; line-height: 1.55; margin: 0; }
+  .feat-text ul { list-style: none; padding: 0; margin: 4px 0 0; display: flex; flex-direction: column; gap: 6px; }
+  .feat-text li { font-size: 13.5px; color: var(--fg-muted); display: flex; gap: 8px; }
+  .feat-text li::before { content: "→"; color: var(--accent); }
+  .feat-visual {
+    background: var(--bg);
+    border-left: 1px solid var(--border);
+    padding: 28px; display: flex; align-items: center; justify-content: center;
+    min-height: 320px;
+  }
+  .feat.reverse .feat-visual { border-left: none; border-right: 1px solid var(--border); }
+  @media (max-width: 880px) { .feat-visual, .feat.reverse .feat-visual { border-left: none; border-right: none; border-top: 1px solid var(--border); } }
+
+  /* visual A: round-table */
+  .vis-round {
+    width: 100%; max-width: 380px; aspect-ratio: 1;
+    position: relative;
+  }
+  .vis-round .center {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    width: 90px; height: 90px; border-radius: 50%;
+    border: 1px solid var(--accent-line); background: var(--accent-dim);
+    display: grid; place-items: center;
+    font-family: var(--font-mono); font-size: 10px; color: var(--accent);
+    text-transform: uppercase; letter-spacing: 0.08em; text-align: center;
+  }
+  .vis-round .center b { display: block; font-size: 22px; color: var(--accent); letter-spacing: 0; }
+  .vis-round .node {
+    position: absolute; width: 64px; height: 64px;
+    border: 1px solid var(--border); border-radius: var(--r-md);
+    background: var(--surface); display: grid; place-items: center;
+    font-family: var(--font-mono); font-size: 10px; color: var(--fg-muted);
+    text-align: center;
+  }
+  .vis-round .n1 { top: 0; left: 50%; transform: translateX(-50%); }
+  .vis-round .n2 { right: 0; top: 50%; transform: translateY(-50%); }
+  .vis-round .n3 { bottom: 0; left: 50%; transform: translateX(-50%); }
+  .vis-round .n4 { left: 0; top: 50%; transform: translateY(-50%); }
+  .vis-round .ln { position: absolute; left: 50%; top: 50%; height: 1px; background: var(--border); transform-origin: left center; }
+
+  /* visual B: glass box mini */
+  .vis-glass { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 6px; }
+  .vis-glass .head {
+    padding: 10px 12px;
+    border: 1px solid var(--border); border-radius: var(--r-md);
+    background: var(--surface);
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11px; font-family: var(--font-mono);
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--fg-muted);
+  }
+  .vis-glass .head .lead {
+    color: var(--accent); margin-left: auto;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .vis-glass .head .lead::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  .vis-glass .row {
+    padding: 10px 12px;
+    border: 1px solid var(--border); border-radius: var(--r-md);
+    background: var(--bg-elev); font-size: 12px;
+    display: grid; grid-template-columns: 18px 1fr auto; gap: 8px; align-items: center;
+  }
+  .vis-glass .row .av { width: 18px; height: 18px; border-radius: 3px; display: grid; place-items: center; font-size: 9px; font-family: var(--font-mono); font-weight: 700; color: oklch(0.15 0.02 260); }
+  .vis-glass .row .body { color: var(--fg-muted); font-size: 12px; }
+  .vis-glass .row .body b { color: var(--fg); font-weight: 600; font-size: 11px; margin-right: 6px; }
+  .vis-glass .row .tag { font-family: var(--font-mono); font-size: 9px; color: var(--fg-faint); padding: 2px 6px; border: 1px solid var(--border); border-radius: 3px; }
+
+  /* visual C: code */
+  .vis-code {
+    width: 100%; max-width: 460px;
+    border: 1px solid var(--border); border-radius: var(--r-md);
+    background: var(--bg); overflow: hidden;
+    font-family: var(--font-mono); font-size: 12px; line-height: 1.65;
+  }
+  .vis-code .bar {
+    padding: 8px 12px; border-bottom: 1px solid var(--border);
+    color: var(--fg-faint); font-size: 10px;
+    display: flex; align-items: center; gap: 10px;
+    background: var(--bg-elev);
+  }
+  .vis-code pre { margin: 0; padding: 14px 16px; color: var(--fg-muted); white-space: pre; overflow-x: auto; }
+  .vis-code .k { color: var(--accent); }
+  .vis-code .s { color: oklch(0.82 0.16 80); }
+  .vis-code .c { color: var(--fg-faint); }
+  .vis-code .n { color: oklch(0.78 0.13 230); }
+
+  /* metrics */
+  .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; }
+  @media (max-width: 700px) { .metrics { grid-template-columns: repeat(2, 1fr); } }
+  .metric { padding: 28px 24px; border-right: 1px solid var(--border); }
+  .metric:last-child { border-right: none; }
+  @media (max-width: 700px) { .metric:nth-child(2) { border-right: none; } .metric:nth-child(1), .metric:nth-child(2) { border-bottom: 1px solid var(--border); } }
+  .metric .val { font-size: 36px; font-weight: 600; letter-spacing: -0.025em; color: var(--fg); }
+  .metric .val span { color: var(--accent); }
+  .metric .lbl { font-size: 12.5px; color: var(--fg-muted); margin-top: 4px; }
+  .metric .src { font-family: var(--font-mono); font-size: 10px; color: var(--fg-faint); margin-top: 8px; }
+
+  /* testimonials */
+  .quotes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 880px) { .quotes { grid-template-columns: 1fr; } }
+  .quote {
+    border: 1px solid var(--border); border-radius: var(--r-lg);
+    background: var(--bg-elev); padding: 22px;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .quote p { font-size: 14px; color: var(--fg); line-height: 1.6; margin: 0; }
+  .quote .who { display: flex; align-items: center; gap: 10px; margin-top: auto; }
+  .quote .who .av {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), oklch(0.7 0.16 200));
+    display: grid; place-items: center;
+    font-weight: 700; font-size: 11px; color: oklch(0.15 0.02 260);
+  }
+  .quote .who .name { font-size: 13px; font-weight: 600; }
+  .quote .who .role { font-size: 11px; color: var(--fg-faint); font-family: var(--font-mono); }
+
+  /* faq */
+  .faq { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; }
+  .faq-item { border-bottom: 1px solid var(--border); }
+  .faq-item summary {
+    padding: 18px 0; font-size: 15px; font-weight: 550;
+    cursor: pointer; list-style: none;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .faq-item summary::-webkit-details-marker { display: none; }
+  .faq-item summary::after { content: "+"; color: var(--fg-faint); font-size: 22px; font-weight: 300; }
+  .faq-item[open] summary::after { content: "−"; }
+  .faq-item p { padding: 0 0 18px; color: var(--fg-muted); font-size: 14px; line-height: 1.6; margin: 0; }
+
+  /* final CTA */
+  .endcta {
+    max-width: 1080px; margin: 0 auto 64px; padding: 0 28px;
+  }
+  .endcta-inner {
+    border: 1px solid var(--border); border-radius: var(--r-xl);
+    padding: 64px 40px; text-align: center;
+    background:
+      radial-gradient(600px 300px at 50% 100%, var(--accent-dim), transparent 70%),
+      var(--bg-elev);
+  }
+  .endcta h2 {
+    font-size: clamp(28px, 4vw, 40px);
+    font-weight: 600; letter-spacing: -0.025em;
+    margin: 0 0 12px;
+  }
+  .endcta p { color: var(--fg-muted); font-size: 16px; max-width: 520px; margin: 0 auto 24px; }
+
+  /* footer */
+  footer {
+    border-top: 1px solid var(--border); padding: 40px 28px 32px;
+    background: var(--bg);
+  }
+  .foot-inner { max-width: 1200px; margin: 0 auto; }
+  .foot-top {
+    display: grid; grid-template-columns: 1.4fr repeat(3, 1fr); gap: 32px;
+    padding-bottom: 32px; border-bottom: 1px solid var(--border);
+  }
+  @media (max-width: 760px) { .foot-top { grid-template-columns: 1fr 1fr; } }
+  .foot-col h5 {
+    font-family: var(--font-mono); font-size: 11px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--fg-faint); margin: 0 0 12px; font-weight: 500;
+  }
+  .foot-col ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+  .foot-col a { color: var(--fg-muted); text-decoration: none; font-size: 13px; }
+  .foot-col a:hover { color: var(--fg); }
+  .foot-bottom {
+    padding-top: 20px; display: flex; justify-content: space-between;
+    align-items: center; flex-wrap: wrap; gap: 12px;
+    font-size: 12px; color: var(--fg-faint); font-family: var(--font-mono);
+  }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="nav-inner">
+    <div class="brand">
+      <img src="logo-mark.svg" alt="" width="22" height="22"/>
+      <span class="brand-wordmark">HEL<span style="color:var(--accent)">I</span>X</span>
+    </div>
+    <nav class="nav-links">
+      <a href="#how">작동 방식</a>
+      <a href="#features">기능</a>
+      <a href="#pricing">가격</a>
+      <a href="#faq">FAQ</a>
+      <a href="../Settings-API/index.html">API</a>
+    </nav>
+    <div class="nav-cta">
+      <a href="../Login/Login.html" class="tb-btn">로그인</a>
+      <a href="../Login/Login.html" class="tb-btn primary">무료 시작 →</a>
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-eyebrow">
+    <span class="tag">v1.4</span>
+    <span>Claude 4 · GPT-5 · Gemini 3 Pro · DeepSeek V3 합의 엔진</span>
+  </div>
+  <h1>혼자가 아닌, <em>합의된 답</em>을 주는 AI.</h1>
+  <p>HELIX는 서로 다른 LLM을 한 토론에 모아 교차검증·합의시키고, 그 과정을 <strong style="color:var(--fg)">유리상자(Glass Box)</strong>로 보여줍니다.</p>
+  <div class="hero-cta">
+    <a href="../Login/Login.html" class="cta-primary">14일 Pro 무료 시작 →</a>
+    <a href="#how" class="cta-secondary">▷ 데모 보기</a>
+  </div>
+  <div class="hero-meta">
+    <span>신용카드 불필요</span>
+    <span class="dot"></span>
+    <span>SOC 2 Type II</span>
+    <span class="dot"></span>
+    <span>1만+ 팀이 사용 중</span>
+  </div>
+</section>
+
+<div class="strip">
+  <div class="strip-label">— 연결된 모델 —</div>
+  <div class="strip-models">
+    <div class="m"><span class="sw" style="background:oklch(0.7 0.15 30)"></span>Claude 4 Opus</div>
+    <div class="m"><span class="sw" style="background:oklch(0.75 0.16 145)"></span>GPT-5</div>
+    <div class="m"><span class="sw" style="background:oklch(0.74 0.16 250)"></span>Gemini 3 Pro</div>
+    <div class="m"><span class="sw" style="background:oklch(0.7 0.18 290)"></span>DeepSeek V3</div>
+    <div class="m"><span class="sw" style="background:oklch(0.8 0.16 60)"></span>Mistral Large 2</div>
+    <div class="m"><span class="sw" style="background:oklch(0.7 0.18 10)"></span>Grok 3</div>
+    <div class="m"><span class="sw" style="background:oklch(0.72 0.13 200)"></span>Llama 4</div>
+  </div>
+</div>
+
+<div class="demo">
+  <div class="demo-frame">
+    <div class="demo-chrome">
+      <div class="dots"><span></span><span></span><span></span></div>
+      <div class="url">helix.ai/chat/<span>SaaS-pricing-Q&amp;A</span></div>
+    </div>
+    <div class="demo-body">
+      <div class="d-user">SaaS B2B 스타트업의 초기 가격 전략을 짜줘. 시드 단계, ACV 12K 목표.</div>
+
+      <div class="d-discuss">
+        <div class="d-discuss-head">
+          <span>4-agent · round 2/3</span>
+          <span class="live" style="margin-left:auto"><span class="pulse"></span>LIVE</span>
+        </div>
+
+        <div class="d-turn">
+          <div class="av" style="background:oklch(0.7 0.15 30)">C</div>
+          <div>
+            <div class="head"><b>Claude</b><span class="mod">Opus 4</span></div>
+            <div class="body">밸류 메트릭을 시트 수가 아닌 <code>사용량(API call)</code>으로 잡는 게 ACV 확장에 유리합니다.</div>
+          </div>
+        </div>
+        <div class="d-turn">
+          <div class="av" style="background:oklch(0.75 0.16 145)">G</div>
+          <div>
+            <div class="head"><b>GPT-5</b><span class="mod">openai</span></div>
+            <div class="body">동의. 다만 시드 단계엔 측정 인프라가 부담 → <strong style="color:var(--fg)">하이브리드</strong>(시트 + 사용량 캡)를 권장.</div>
+          </div>
+        </div>
+        <div class="d-turn">
+          <div class="av" style="background:oklch(0.74 0.16 250)">M</div>
+          <div>
+            <div class="head"><b>Gemini</b><span class="mod">3 Pro</span></div>
+            <div class="body">3-티어 구조에 design partner 할인 50%를 첫 6개월 한정으로 적용. 레퍼런스 확보 → PLG 전환 신호.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-final">
+        <span class="badge">★ Consensus</span>
+        <div class="text">3-티어 하이브리드 가격 · 시트 베이스 + 사용량 캡 · design partner 50% 할인 (6mo).</div>
+        <span class="score">합의 92%</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="section" id="how">
+  <div class="section-title">
+    <div class="section-eyebrow">— 작동 방식 —</div>
+    <h2>3단계로 합의된 답을 만듭니다.</h2>
+    <p>한 모델의 환각, 한 모델의 편향, 한 모델의 사각지대 — HELIX는 토론으로 이를 상쇄합니다.</p>
+  </div>
+
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-num">1</div>
+      <h3>질문을 라우팅합니다</h3>
+      <p>주제·복잡도·언어를 분석해, 강점이 다른 3~5개 모델을 자동으로 호출합니다.</p>
+      <div class="tech">routing → claude · gpt · gemini · deepseek</div>
+    </div>
+    <div class="card">
+      <div class="card-num">2</div>
+      <h3>모델끼리 토론합니다</h3>
+      <p>각 모델이 의견을 내고, 다른 모델의 답을 읽고 반박·동의·보완합니다. 최대 3라운드.</p>
+      <div class="tech">debate · 2~3 rounds · dissent surfaced</div>
+    </div>
+    <div class="card">
+      <div class="card-num">3</div>
+      <h3>최종 답을 합성합니다</h3>
+      <p>Lead 모델이 토론 전체를 읽고 단 하나의 답으로 통합 — 합의 점수와 함께 반환합니다.</p>
+      <div class="tech">synthesize · consensus score · cited</div>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="padding-top:0">
+  <div class="section-title">
+    <div class="section-eyebrow">— 왜 한 모델만으론 부족한가 —</div>
+    <h2>같은 질문, 세 가지 다른 답.</h2>
+    <p>최신 벤치마크에서도 모델마다 정확도, 추론 스타일, 편향이 다릅니다. 중요한 결정에 한 모델만 쓰면 그 사각지대를 그대로 떠안게 됩니다.</p>
+  </div>
+
+  <div class="compare">
+    <div class="compare-card bad">
+      <h4><span class="pip"></span>단일 모델 사용 시</h4>
+      <div class="compare-list">
+        <div class="compare-row"><div class="ico">×</div><div>이 모델의 환각·편향이 그대로 답에 반영됨</div></div>
+        <div class="compare-row"><div class="ico">×</div><div>출처·근거의 사각지대를 사용자가 직접 검증해야 함</div></div>
+        <div class="compare-row"><div class="ico">×</div><div>모델이 자신의 약점을 거의 알려주지 않음</div></div>
+        <div class="compare-row"><div class="ico">×</div><div>여러 모델을 직접 켜고 끄며 비교 — 시간 낭비</div></div>
+        <div class="compare-row"><div class="ico">×</div><div>중요한 의사결정에 "참고용"으로만 쓰게 됨</div></div>
+      </div>
+    </div>
+    <div class="compare-card good">
+      <h4><span class="pip"></span>HELIX 사용 시</h4>
+      <div class="compare-list">
+        <div class="compare-row"><div class="ico">✓</div><div>모델 간 교차검증으로 환각이 자동으로 드러남</div></div>
+        <div class="compare-row"><div class="ico">✓</div><div>합의 점수로 답의 신뢰도를 한눈에 파악</div></div>
+        <div class="compare-row"><div class="ico">✓</div><div>의견 충돌(반대 의견)이 항상 표면에 노출됨</div></div>
+        <div class="compare-row"><div class="ico">✓</div><div>한 번의 질문 · 한 곳의 UI에서 종결</div></div>
+        <div class="compare-row"><div class="ico">✓</div><div>실제 결정에 쓸 수 있는 신뢰도</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="features">
+  <div class="section-title">
+    <div class="section-eyebrow">— 핵심 기능 —</div>
+    <h2>토론을 보이게 만든 첫 AI 인터페이스.</h2>
+  </div>
+
+  <div class="feat">
+    <div class="feat-text">
+      <div class="label">01 · Round-table Routing</div>
+      <h3>질문에 맞는 모델 조합을 자동으로 구성합니다</h3>
+      <p>코드는 Claude + DeepSeek, 한국어 비즈니스 글쓰기는 GPT + Gemini, 멀티모달은 Gemini + GPT — 라우터가 토픽·언어·복잡도를 보고 결정합니다.</p>
+      <ul>
+        <li>7개 모델 풀에서 매 질문마다 최적 조합 선택</li>
+        <li>수동 오버라이드 가능 (Pro 이상)</li>
+        <li>모델 호출 로그 100% 투명 공개</li>
+      </ul>
+    </div>
+    <div class="feat-visual">
+      <div class="vis-round">
+        <div class="center"><span style="font-size:9px">routed to</span><b>4</b><span style="font-size:8px">agents</span></div>
+        <div class="node n1" style="border-color:var(--accent-line);color:var(--accent)">Claude</div>
+        <div class="node n2">GPT-5</div>
+        <div class="node n3">Gemini</div>
+        <div class="node n4">DeepSeek</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="feat reverse">
+    <div class="feat-text">
+      <div class="label">02 · Glass Box</div>
+      <h3>모델끼리 무슨 대화를 했는지 다 보여드립니다</h3>
+      <p>최종 답 위에 접힌 "Glass Box" — 펼치면 누가 무엇을 말했고, 누가 동의했고, 누가 반대했는지가 그대로 보입니다. 블랙박스 없는 AI.</p>
+      <ul>
+        <li>라운드별 발언 · 역할(Lead/Agree/Dissent) 태깅</li>
+        <li>합의 점수 · 토큰 사용량 · 응답 시간 표시</li>
+        <li>특정 모델 의견에만 follow-up 질문 가능</li>
+      </ul>
+    </div>
+    <div class="feat-visual">
+      <div class="vis-glass">
+        <div class="head">
+          <span>discussion</span>
+          <span class="lead">consensus 92%</span>
+        </div>
+        <div class="row">
+          <div class="av" style="background:oklch(0.7 0.15 30)">C</div>
+          <div class="body"><b>Claude</b>밸류 메트릭은 사용량 기반…</div>
+          <div class="tag">LEAD</div>
+        </div>
+        <div class="row">
+          <div class="av" style="background:oklch(0.75 0.16 145)">G</div>
+          <div class="body"><b>GPT-5</b>동의. 다만 측정 인프라…</div>
+          <div class="tag">AGREE</div>
+        </div>
+        <div class="row">
+          <div class="av" style="background:oklch(0.74 0.16 250)">M</div>
+          <div class="body"><b>Gemini</b>3-티어 + 디자인 파트너…</div>
+          <div class="tag">EXTEND</div>
+        </div>
+        <div class="row">
+          <div class="av" style="background:oklch(0.7 0.18 290)">D</div>
+          <div class="body"><b>DeepSeek</b>시드엔 단순한 2-티어가…</div>
+          <div class="tag" style="color:var(--warn);border-color:oklch(from var(--warn) l c h / 0.35)">DISSENT</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="feat">
+    <div class="feat-text">
+      <div class="label">03 · Developer API</div>
+      <h3>당신의 앱 안에서도 합의된 답을 받으세요</h3>
+      <p>한 줄의 API로 다중 모델 토론을 호출합니다. 응답에는 합의 점수와 각 모델의 발언이 그대로 포함되어, 앱에서 신뢰도 UI를 직접 그릴 수 있습니다.</p>
+      <ul>
+        <li>OpenAI 호환 엔드포인트</li>
+        <li>스트리밍 · 함수 호출 · JSON 모드 지원</li>
+        <li>SOC 2 · GDPR · 데이터 보관 0일 옵션</li>
+      </ul>
+    </div>
+    <div class="feat-visual">
+      <div class="vis-code">
+        <div class="bar">POST https://api.helix.ai/v1/consensus</div>
+<pre><span class="c">// 한 번의 호출, N개 모델의 합의</span>
+<span class="k">const</span> r = <span class="k">await</span> helix.consensus({
+  prompt: <span class="s">"가격 전략을 짜줘"</span>,
+  agents: [<span class="s">"claude"</span>, <span class="s">"gpt"</span>, <span class="s">"gemini"</span>],
+  rounds: <span class="n">3</span>,
+  glass_box: <span class="k">true</span>
+});
+
+console.log(r.answer);
+console.log(r.consensus_score);  <span class="c">// 0.92</span>
+console.log(r.dissent);          <span class="c">// [{model, text}]</span></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="padding-top:0">
+  <div class="section-title">
+    <div class="section-eyebrow">— 측정된 효과 —</div>
+    <h2>토론은 단순한 비주얼이 아닙니다.</h2>
+    <p>1,200건의 자체 벤치마크 (MMLU, GPQA, MATH, 한국어 KMMLU) 기준.</p>
+  </div>
+
+  <div class="metrics">
+    <div class="metric">
+      <div class="val">+<span>17.4%</span></div>
+      <div class="lbl">단일 모델 대비 정확도</div>
+      <div class="src">vs. 최고 단일 모델 평균</div>
+    </div>
+    <div class="metric">
+      <div class="val"><span>−63%</span></div>
+      <div class="lbl">환각률 감소</div>
+      <div class="src">사실 검증 벤치마크</div>
+    </div>
+    <div class="metric">
+      <div class="val"><span>92%</span></div>
+      <div class="lbl">사용자 신뢰도</div>
+      <div class="src">n=842, 5점 척도 4+ 비율</div>
+    </div>
+    <div class="metric">
+      <div class="val"><span>3.4초</span></div>
+      <div class="lbl">평균 응답 시간</div>
+      <div class="src">3-agent · 2 rounds</div>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="padding-top:0">
+  <div class="section-title">
+    <div class="section-eyebrow">— 실제 사용자 —</div>
+    <h2>한 번 써본 뒤로는 단일 모델로 못 돌아가요.</h2>
+  </div>
+
+  <div class="quotes">
+    <div class="quote">
+      <p>법률 자문 초안을 쓸 때 가장 무서운 건 "그럴듯한 거짓말"입니다. HELIX의 반대 의견 패널이 그걸 잡아줍니다.</p>
+      <div class="who">
+        <div class="av">SK</div>
+        <div>
+          <div class="name">김선영</div>
+          <div class="role">변호사 · 법무법인 K</div>
+        </div>
+      </div>
+    </div>
+    <div class="quote">
+      <p>제품 의사결정 회의에서 "Claude는 이렇게 봤고, GPT는 다르게 봤어"라고 말할 수 있는 게 진짜 큰 변화입니다.</p>
+      <div class="who">
+        <div class="av">JL</div>
+        <div>
+          <div class="name">이지훈</div>
+          <div class="role">Product Lead · 핀테크</div>
+        </div>
+      </div>
+    </div>
+    <div class="quote">
+      <p>API 한 번으로 3개 모델 합의를 받습니다. 자체 라우터 만들 시간 아꼈고, 합의 점수가 그대로 우리 UI에 들어갑니다.</p>
+      <div class="who">
+        <div class="av">MP</div>
+        <div>
+          <div class="name">박민호</div>
+          <div class="role">CTO · AI 헬스케어</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="faq">
+  <div class="section-title">
+    <div class="section-eyebrow">— FAQ —</div>
+    <h2>자주 묻는 질문</h2>
+  </div>
+
+  <div class="faq">
+    <details class="faq-item" open>
+      <summary>여러 모델을 부른다면, 비용도 N배인가요?</summary>
+      <p>아닙니다. Pro 플랜에는 월 300회의 합의 호출이 포함되며, 라우터가 자동으로 가벼운 모델 + 강한 Lead 모델 조합을 골라 평균 비용을 단일 GPT-4 호출의 1.4배 수준으로 유지합니다.</p>
+    </details>
+    <details class="faq-item">
+      <summary>제 데이터로 모델을 학습시키나요?</summary>
+      <p>아니요. 모든 플랜에서 사용자 데이터는 모델 학습에 사용되지 않습니다. Enterprise는 데이터 보관 0일 옵션과 자체 키(BYOK) 모드를 제공합니다.</p>
+    </details>
+    <details class="faq-item">
+      <summary>모델이 의견 일치를 못 보면 어떻게 되나요?</summary>
+      <p>합의 점수가 60% 미만이면 답을 강제로 통일하지 않고, "분기된 답 A / B" 형태로 양쪽 입장을 모두 보여드립니다. 결정은 항상 사용자 몫입니다.</p>
+    </details>
+    <details class="faq-item">
+      <summary>API에서 어떤 모델을 쓸지 직접 지정할 수 있나요?</summary>
+      <p>네. <code>agents: ["claude-opus-4", "gpt-5", "deepseek-v3"]</code> 형태로 직접 지정하거나, <code>"auto"</code>로 라우터에 위임할 수 있습니다.</p>
+    </details>
+    <details class="faq-item">
+      <summary>오프라인/온프레미스 배포가 가능한가요?</summary>
+      <p>Enterprise 플랜에서 AWS PrivateLink, Azure 전용 테넌트, 또는 자체 K8s 배포(Helm 차트)를 지원합니다. Llama 4 / Mistral 같은 오픈 모델로 풀리 폐쇄망 운영도 가능합니다.</p>
+    </details>
+  </div>
+</section>
+
+<div class="endcta">
+  <div class="endcta-inner">
+    <h2>한 모델의 답에 만족하지 마세요.</h2>
+    <p>14일 Pro 무료 체험. 신용카드 불필요. 1분이면 첫 합의 답을 받습니다.</p>
+    <div class="hero-cta">
+      <a href="../Login/Login.html" class="cta-primary">무료로 시작하기 →</a>
+      <a href="../Pricing/Pricing.html" class="cta-secondary">가격 보기</a>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="foot-inner">
+    <div class="foot-top">
+      <div class="foot-col">
+        <div class="brand" style="margin-bottom:14px">
+          <img src="logo-mark.svg" alt="" width="22" height="22"/>
+          <span class="brand-wordmark">HEL<span style="color:var(--accent)">I</span>X</span>
+        </div>
+        <p style="color:var(--fg-muted);font-size:13px;max-width:280px;line-height:1.55;margin:0">서로 다른 LLM이 토론하고 합의해, 한 모델의 한계를 넘는 답을 만드는 AI 어시스턴트.</p>
+      </div>
+      <div class="foot-col">
+        <h5>Product</h5>
+        <ul>
+          <li><a href="#features">기능</a></li>
+          <li><a href="../Pricing/Pricing.html">가격</a></li>
+          <li><a href="../Settings-API/index.html">API</a></li>
+          <li><a href="#">체인지로그</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h5>Company</h5>
+        <ul>
+          <li><a href="#">소개</a></li>
+          <li><a href="#">블로그</a></li>
+          <li><a href="#">채용</a></li>
+          <li><a href="#">미디어킷</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h5>Legal</h5>
+        <ul>
+          <li><a href="#">이용약관</a></li>
+          <li><a href="#">개인정보처리방침</a></li>
+          <li><a href="#">보안 / SOC 2</a></li>
+          <li><a href="#">DPA</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <div>© 2026 HELIX, Inc.</div>
+      <div>v1.4.2 · status: <span style="color:var(--accent)">●</span> all systems operational</div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

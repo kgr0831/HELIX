@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(New-Item *)",
+      "PowerShell(python -m venv C:\\\\CrossCheckAI\\\\venv)",
+      "PowerShell(C:\\\\CrossCheckAI\\\\venv\\\\Scripts\\\\pip.exe install -r C:\\\\CrossCheckAI\\\\requirements.txt 2>&1 | Select-Object -Last 5)",
+      "PowerShell(C:\\\\CrossCheckAI\\\\venv\\\\Scripts\\\\python.exe -c \"import fastapi, langgraph, tiktoken, langchain, pydantic; print\\('All imports OK'\\)\")",
+      "PowerShell(Remove-Item *)",
+      "PowerShell(C:\\\\CrossCheckAI\\\\venv\\\\Scripts\\\\pip.exe install langchain-openai 2>&1 | Select-Object -Last 3)",
+      "PowerShell(Get-Item *)",
+      "PowerShell(Start-Process \"http://localhost:5173\")"
+    ]
+  }
+}

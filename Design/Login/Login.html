@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<title>HELIX 로그인</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="shared.css" />
+<style>:root{}</style>
+<style>
+  body { overflow: hidden; }
+  .auth { min-height: 100vh; display: grid; grid-template-columns: 1fr 480px; }
+  @media (max-width: 880px) { .auth { grid-template-columns: 1fr; } .auth-side { display: none; } }
+
+  .auth-side {
+    background: linear-gradient(180deg, var(--bg) 0%, var(--bg-elev) 100%);
+    border-right: 1px solid var(--border);
+    padding: 40px 48px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
+  .auth-side::before {
+    content: ""; position: absolute; inset: 0;
+    background:
+      radial-gradient(800px 400px at 20% 20%, var(--accent-dim), transparent 60%),
+      radial-gradient(600px 400px at 80% 90%, color-mix(in oklch, var(--accent) 8%, transparent), transparent 60%);
+    pointer-events: none;
+  }
+  .auth-side > * { position: relative; }
+  .auth-brand { display: flex; align-items: center; gap: 8px; }
+  .auth-pitch { margin-top: auto; max-width: 460px; }
+  .auth-pitch h1 {
+    font-size: 36px; line-height: 1.1; letter-spacing: -0.03em;
+    font-weight: 600; margin: 0 0 16px;
+  }
+  .auth-pitch h1 em { font-style: normal; color: var(--accent); }
+  .auth-pitch p { color: var(--fg-muted); font-size: 14.5px; line-height: 1.6; }
+
+  .auth-quote {
+    margin-top: 28px; padding: 18px 20px;
+    border-left: 2px solid var(--accent-line);
+    background: color-mix(in oklch, var(--surface) 60%, transparent);
+    border-radius: 0 var(--r-md) var(--r-md) 0;
+  }
+  .auth-quote p { font-size: 14px; color: var(--fg); margin: 0 0 10px; line-height: 1.55; }
+  .auth-quote .who { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--fg-faint); }
+  .auth-quote .who .avatar {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), oklch(0.7 0.16 200));
+    color: oklch(0.18 0.05 142); display: grid; place-items: center;
+    font-size: 10px; font-weight: 700;
+  }
+
+  .auth-form {
+    padding: 56px 56px;
+    display: flex; flex-direction: column; justify-content: center;
+    max-width: 480px; width: 100%; margin: 0 auto;
+    overflow-y: auto; max-height: 100vh;
+  }
+  .auth-mobile-brand { display: none; margin-bottom: 32px; }
+  @media (max-width: 880px) { .auth-mobile-brand { display: flex; } .auth-form { padding: 32px 24px; max-width: 100%; } }
+
+  .auth-form h2 { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 6px; }
+  .auth-form .sub { color: var(--fg-muted); font-size: 14px; margin: 0 0 28px; }
+
+  .oauth { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+  .oauth-btn {
+    width: 100%; height: 42px; padding: 0 14px;
+    display: flex; align-items: center; gap: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--fg); font-size: 14px; font-weight: 550;
+    border-radius: var(--r-md);
+    cursor: pointer; transition: 0.12s ease;
+  }
+  .oauth-btn:hover { border-color: var(--border-strong); background: var(--surface-2); }
+  .oauth-btn .icon { width: 18px; height: 18px; display: grid; place-items: center; }
+  .oauth-btn .grow { flex: 1; text-align: left; }
+  .oauth-btn .badge { font-family: var(--font-mono); font-size: 10px; color: var(--fg-faint); }
+
+  .divider {
+    display: flex; align-items: center; gap: 10px;
+    color: var(--fg-faint); font-size: 11px; font-family: var(--font-mono);
+    letter-spacing: 0.08em; text-transform: uppercase;
+    margin: 6px 0 18px;
+  }
+  .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  .field label {
+    font-size: 12px; color: var(--fg-muted);
+    font-weight: 550;
+    display: flex; justify-content: space-between;
+  }
+  .field label a { color: var(--accent); text-decoration: none; font-size: 12px; }
+  .field input {
+    height: 42px; padding: 0 12px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r-md); color: var(--fg); font-size: 14px;
+    outline: none; transition: 0.12s ease;
+  }
+  .field input:focus {
+    border-color: var(--accent-line);
+    box-shadow: 0 0 0 3px var(--accent-dim);
+  }
+
+  .auth-submit { margin-top: 8px; width: 100%; height: 44px; justify-content: center; }
+
+  .auth-foot {
+    text-align: center; color: var(--fg-muted);
+    font-size: 13px; margin-top: 22px;
+  }
+  .auth-foot a { color: var(--accent); text-decoration: none; }
+  .auth-foot a:hover { text-decoration: underline; }
+
+  .tos { color: var(--fg-faint); font-size: 11px; text-align: center; margin-top: 18px; line-height: 1.5; }
+  .tos a { color: var(--fg-muted); text-decoration: none; }
+  .tos a:hover { color: var(--fg); }
+
+  .tabs {
+    display: inline-flex; background: var(--surface);
+    border: 1px solid var(--border); border-radius: var(--r-md);
+    padding: 3px; margin-bottom: 22px;
+  }
+  .tabs button {
+    padding: 6px 14px; font-size: 12.5px; font-weight: 550;
+    color: var(--fg-muted); border-radius: 5px;
+    background: transparent; border: none; cursor: pointer;
+  }
+  .tabs button.active { background: var(--bg); color: var(--fg); }
+</style>
+</head>
+<body>
+<div class="auth">
+  <aside class="auth-side">
+    <div class="auth-brand">
+      <img src="logo-mark.svg" alt="" width="24" height="24" style="background:var(--bg-elev);border-radius:6px;padding:2px"/>
+      <span class="brand-wordmark">HEL<span style="color:var(--accent)">I</span>X</span>
+      <span class="brand-sub mono">eXchange</span>
+    </div>
+
+    <div class="auth-pitch">
+      <h1>혼자가 아닌, <em>합의된 답</em>을 받는 AI.</h1>
+      <p>HELIX는 Claude, GPT, Gemini, DeepSeek 등 서로 다른 LLM이 토론·교차검증해 한 모델의 한계를 넘는 답변을 합성합니다.</p>
+
+      <div class="auth-quote">
+        <p>"중요한 의사결정에 단일 모델 답변을 그대로 쓰진 않습니다. HELIX의 합의 점수가 표시되면 그제야 안심돼요."</p>
+        <div class="who"><span class="avatar">JL</span><span>이지훈 · 핀테크 PM</span></div>
+      </div>
+    </div>
+  </aside>
+
+  <section class="auth-form">
+    <div class="auth-mobile-brand">
+      <img src="logo-mark.svg" alt="" width="24" height="24"/>
+      <span class="brand-wordmark" style="margin-left:8px">HEL<span style="color:var(--accent)">I</span>X</span>
+    </div>
+
+    <div class="tabs">
+      <button class="active" onclick="setMode('login', this)">로그인</button>
+      <button onclick="setMode('signup', this)">회원가입</button>
+    </div>
+
+    <h2 id="form-title">계정에 로그인</h2>
+    <p class="sub" id="form-sub">여러 모델의 합의를 한 번의 질문으로.</p>
+
+    <div class="oauth">
+      <button class="oauth-btn">
+        <span class="icon">
+          <svg viewBox="0 0 24 24" width="18" height="18"><path fill="#4285F4" d="M22.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.4h5.9c-.3 1.4-1.1 2.5-2.2 3.3v2.7h3.5c2.1-1.9 3.3-4.8 3.3-8.1z"/><path fill="#34A853" d="M12 23c2.9 0 5.4-1 7.2-2.6l-3.5-2.7c-1 .7-2.2 1.1-3.7 1.1-2.9 0-5.3-2-6.2-4.6H2.2v2.9C4 19.9 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.8 14.1c-.2-.7-.4-1.4-.4-2.1s.1-1.4.4-2.1V7H2.2c-.7 1.5-1.2 3.2-1.2 5s.4 3.5 1.2 5l3.6-2.9z"/><path fill="#EA4335" d="M12 5.4c1.6 0 3.1.6 4.2 1.6L19.3 4C17.4 2.2 14.9 1 12 1 7.7 1 4 3.1 2.2 6.4l3.6 2.9c.9-2.6 3.3-3.9 6.2-3.9z"/></svg>
+        </span>
+        <span class="grow">Google로 계속하기</span>
+      </button>
+      <button class="oauth-btn">
+        <span class="icon">
+          <svg viewBox="0 0 16 16" width="18" height="18"><path fill="currentColor" d="M8 0a8 8 0 0 0-2.5 15.6c.4.1.5-.2.5-.4v-1.4c-2.2.5-2.7-1.1-2.7-1.1-.4-1-.9-1.2-.9-1.2-.7-.5.1-.5.1-.5.8.1 1.2.8 1.2.8.7 1.2 1.9.9 2.4.7.1-.5.3-.9.5-1.1-1.8-.2-3.6-.9-3.6-3.9 0-.9.3-1.6.8-2.1-.1-.2-.4-1 .1-2.1 0 0 .7-.2 2.2.8.6-.2 1.3-.3 2-.3s1.4.1 2 .3c1.5-1 2.2-.8 2.2-.8.4 1.1.2 1.9.1 2.1.5.5.8 1.2.8 2.1 0 3-1.8 3.7-3.6 3.9.3.2.5.7.5 1.5v2.2c0 .2.1.5.5.4A8 8 0 0 0 8 0z"/></svg>
+        </span>
+        <span class="grow">GitHub로 계속하기</span>
+      </button>
+    </div>
+
+    <div class="divider">또는</div>
+
+    <div class="field">
+      <label for="email">이메일</label>
+      <input id="email" type="email" placeholder="you@company.com" autocomplete="email"/>
+    </div>
+    <div class="field">
+      <label for="pw">비밀번호 <a href="#" id="forgot">비밀번호 찾기</a></label>
+      <input id="pw" type="password" placeholder="••••••••" autocomplete="current-password"/>
+    </div>
+
+    <button class="btn primary auth-submit" id="submit-btn">로그인 →</button>
+
+    <div class="auth-foot" id="auth-foot">
+      계정이 없으신가요? <a href="#" onclick="setMode('signup', null); return false;">회원가입</a>
+    </div>
+
+    <p class="tos">계속 진행하면 HELIX의 <a href="#">이용약관</a> 및 <a href="#">개인정보처리방침</a>에 동의하는 것으로 간주됩니다.</p>
+  </section>
+</div>
+
+<script>
+  function setMode(mode, btn) {
+    const tabs = document.querySelectorAll(".tabs button");
+    if (btn) { tabs.forEach(b => b.classList.remove("active")); btn.classList.add("active"); }
+    else { tabs[mode === "login" ? 0 : 1].classList.add("active"); tabs[mode === "login" ? 1 : 0].classList.remove("active"); }
+    const isSignup = mode === "signup";
+    document.getElementById("form-title").textContent = isSignup ? "HELIX 계정 만들기" : "계정에 로그인";
+    document.getElementById("form-sub").textContent = isSignup ? "14일 Pro 무료 체험. 신용카드 불필요." : "여러 모델의 합의를 한 번의 질문으로.";
+    document.getElementById("submit-btn").textContent = isSignup ? "계정 만들기 →" : "로그인 →";
+    document.getElementById("forgot").style.display = isSignup ? "none" : "inline";
+    document.getElementById("auth-foot").innerHTML = isSignup
+      ? '이미 계정이 있나요? <a href="#" onclick="setMode(\'login\', null); return false;">로그인</a>'
+      : '계정이 없으신가요? <a href="#" onclick="setMode(\'signup\', null); return false;">회원가입</a>';
+  }
+</script>
+</body>
+</html>

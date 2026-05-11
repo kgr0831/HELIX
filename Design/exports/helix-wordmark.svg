@@ -1,0 +1,11 @@
+<svg width="640" height="160" viewBox="0 0 640 160" fill="none" xmlns="http://www.w3.org/2000/svg" font-family="Manrope, ui-sans-serif, system-ui, sans-serif">
+  <g transform="translate(20 16) scale(5.33)">
+    <path d="M 5 3 C 5 8, 19 8, 19 12 C 19 16, 5 16, 5 21" stroke="#65a30d" stroke-width="1.6" stroke-linecap="round"></path>
+    <path d="M 19 3 C 19 8, 5 8, 5 12 C 5 16, 19 16, 19 21" stroke="#9ca3af" stroke-width="1.6" stroke-linecap="round"></path>
+    <line x1="5" y1="6.5" x2="19" y2="6.5" stroke="#9ca3af" stroke-width="0.8" stroke-linecap="round" opacity="0.45"></line>
+    <line x1="11" y1="12" x2="13" y2="12" stroke="#65a30d" stroke-width="2.24" stroke-linecap="round"></line>
+    <line x1="5" y1="17.5" x2="19" y2="17.5" stroke="#9ca3af" stroke-width="0.8" stroke-linecap="round" opacity="0.45"></line>
+  </g>
+  <text x="170" y="98" font-size="72" font-weight="700" letter-spacing="-2" fill="#111418">HEL<tspan fill="#65a30d">I</tspan>X</text>
+  <text x="172" y="128" font-size="16" font-weight="500" letter-spacing="2" fill="#6b7280" font-family="JetBrains Mono, ui-monospace, monospace">eXchange</text>
+</svg>
