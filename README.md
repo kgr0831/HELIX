@@ -1,8 +1,8 @@
+# 🧬 HELIX: The Multi-Agent Intelligence Hub
+
 <p align="center">
   <img src="./Design/exports/helix-mark.png" width="200" />
 </p>
-
-# 🧬 HELIX: The Multi-Agent Intelligence Hub
 
 ## What is HELIX?
 
