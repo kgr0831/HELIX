@@ -1,0 +1,134 @@
+.layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+}
+
+@media (max-width: 880px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+  .side {
+    display: none;
+  }
+}
+
+.side {
+  border-right: 1px solid var(--border);
+  background: var(--bg);
+  padding: 18px 14px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  overflow-y: auto;
+}
+
+.brandRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px 14px;
+  border-bottom: 1px solid var(--border);
+  text-decoration: none;
+  color: var(--fg);
+}
+
+.back {
+  color: var(--fg-faint);
+  font-size: 12px;
+  text-decoration: none;
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.back:hover {
+  color: var(--fg-muted);
+}
+
+.navGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.navGroup h5 {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+  padding: 4px 8px;
+  margin: 0 0 4px;
+  font-weight: 500;
+}
+
+.navItem {
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  font-size: 13px;
+  color: var(--fg-muted);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.navItem:hover {
+  background: var(--surface);
+  color: var(--fg);
+}
+
+.navItemActive {
+  composes: navItem;
+  background: var(--surface);
+  color: var(--fg);
+}
+
+.badge {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--accent);
+  background: var(--accent-dim);
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+.content {
+  max-width: 820px;
+  padding: 36px 40px 80px;
+  width: 100%;
+}
+
+@media (max-width: 720px) {
+  .content {
+    padding: 24px 20px 60px;
+  }
+}
+
+.pageHead {
+  margin-bottom: 32px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.pageHead h1 {
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  margin: 0 0 6px;
+}
+
+.pageHead p {
+  color: var(--fg-muted);
+  font-size: 13.5px;
+  margin: 0;
+}

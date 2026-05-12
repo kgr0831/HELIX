@@ -1,0 +1,241 @@
+.page {
+  min-height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+}
+
+/* ── Nav ── */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: blur(12px);
+  background: color-mix(in oklch, var(--bg) 75%, transparent);
+  border-bottom: 1px solid var(--border);
+  height: 56px;
+  display: flex;
+  align-items: center;
+  animation: navSlideDown 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes navSlideDown {
+  from { opacity: 0; transform: translateY(-100%); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.navInner {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 0 28px;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: var(--fg);
+  border: none;
+  padding: 0;
+}
+
+.navLinks {
+  display: flex;
+  gap: 22px;
+}
+
+.navLinks a {
+  color: var(--fg-muted);
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.navLinks a:hover {
+  color: var(--fg);
+}
+
+.navLinks a.active {
+  color: var(--fg);
+}
+
+.navCta {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--fg-muted);
+  font-weight: 550;
+  font-size: 13.5px;
+  cursor: pointer;
+  transition: 0.12s ease;
+  text-decoration: none;
+}
+
+.btn:hover {
+  color: var(--fg);
+  border-color: var(--border-strong);
+}
+
+.btnPrimary {
+  composes: btn;
+  background: var(--accent);
+  color: oklch(0.18 0.05 142);
+  border-color: transparent;
+  font-weight: 600;
+}
+
+.btnPrimary:hover {
+  filter: brightness(1.06);
+}
+
+.ctaPrimary {
+  height: 44px;
+  padding: 0 22px;
+  background: var(--accent);
+  color: oklch(0.18 0.05 142);
+  border-radius: var(--r-md);
+  font-weight: 600;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ctaPrimary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px var(--accent-dim);
+}
+
+.ctaSecondary {
+  height: 44px;
+  padding: 0 18px;
+  border: 1px solid var(--border);
+  color: var(--fg);
+  border-radius: var(--r-md);
+  font-size: 14px;
+  background: var(--surface);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.ctaSecondary:hover {
+  border-color: var(--border-strong);
+}
+
+/* ── Footer ── */
+.footer {
+  border-top: 1px solid var(--border);
+  padding: 40px 28px 32px;
+  background: var(--bg);
+}
+
+.footInner {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.footTop {
+  display: grid;
+  grid-template-columns: 1.4fr repeat(3, 1fr);
+  gap: 32px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid var(--border);
+}
+
+@media (max-width: 760px) {
+  .footTop {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.footCol h5 {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+  margin: 0 0 12px;
+  font-weight: 500;
+}
+
+.footCol ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.footCol a {
+  color: var(--fg-muted);
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.footCol a:hover {
+  color: var(--fg);
+}
+
+.footDesc {
+  color: var(--fg-muted);
+  font-size: 13px;
+  max-width: 280px;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.footBottom {
+  padding-top: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--fg-faint);
+  font-family: var(--font-mono);
+}
+
+/* ── Simple footer variant ── */
+.simpleFooter {
+  border-top: 1px solid var(--border);
+  padding: 24px 28px;
+  background: var(--bg);
+}
+
+.simpleFootInner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-faint);
+}

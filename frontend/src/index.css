@@ -53,15 +53,60 @@ body {
   font-size: 14px; line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   letter-spacing: -0.005em;
-  overflow: hidden;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
 .mono { font-family: var(--font-mono); }
+
+/* ── Scroll reveal animations ── */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+[data-reveal].revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+[data-reveal="fade"] {
+  transform: none;
+}
+[data-reveal="scale"] {
+  transform: scale(0.96);
+}
+[data-reveal="scale"].revealed {
+  transform: scale(1);
+}
+[data-reveal="slide-left"] {
+  transform: translateX(-32px);
+}
+[data-reveal="slide-left"].revealed {
+  transform: translateX(0);
+}
+[data-reveal="slide-right"] {
+  transform: translateX(32px);
+}
+[data-reveal="slide-right"].revealed {
+  transform: translateX(0);
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 var(--accent-dim); }
+  50% { box-shadow: 0 0 0 8px transparent; }
+}
 
 /* ── App grid ── */
 .app {
   display: grid;
   grid-template-columns: var(--sb) 1fr;
+  overflow: hidden;
   grid-template-rows: var(--hd) 1fr;
   height: 100vh;
   background: var(--bg);
