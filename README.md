@@ -1,4 +1,4 @@
-# 🧬 HELIX - HEterogeneous LLM Integrated eXchange
+# 🧬 HELIX - HEterogeneous Llm Integrated eXchange
 
 <p align="center">
   <img src="./Design/exports/helix-mark.png" width="200" />
