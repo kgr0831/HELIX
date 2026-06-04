@@ -25,6 +25,7 @@ export function SettingsAccountPage() {
   const user = useAuth((st) => st.user);
   const [defaults, setDefaults] = useState<Defaults>(FALLBACK);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState(false);
 
   useEffect(() => {
     fetch("/api/settings", { credentials: "include" })
@@ -33,15 +34,20 @@ export function SettingsAccountPage() {
       .catch(() => {});
   }, []);
 
-  const set = (k: keyof Defaults) => (v: string) => { setDefaults((d) => ({ ...d, [k]: v })); setSaved(false); };
+  const set = (k: keyof Defaults) => (v: string) => { setDefaults((d) => ({ ...d, [k]: v })); setSaved(false); setSaveError(false); };
 
   const saveDefaults = async () => {
-    const r = await fetch("/api/settings", {
-      method: "PUT", credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ defaults }),
-    });
-    if (r.ok) { setSaved(true); }
+    setSaveError(false);
+    try {
+      const r = await fetch("/api/settings", {
+        method: "PUT", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ defaults }),
+      });
+      if (r.ok) setSaved(true); else setSaveError(true);
+    } catch {
+      setSaveError(true);
+    }
   };
 
   // 데이터 내보내기 / 히스토리 삭제 / 계정 삭제 (Phase C)
@@ -157,6 +163,7 @@ export function SettingsAccountPage() {
         </div>
         <div className={s.cbFootRight}>
           {saved && <span style={{ color: "var(--accent)", fontSize: 12, marginRight: 8 }}>저장됨 ✓</span>}
+          {saveError && <span style={{ color: "#f87171", fontSize: 12, marginRight: 8 }}>저장 실패 — 다시 시도</span>}
           <button className={s.saveBtn} onClick={saveDefaults}>저장</button>
         </div>
       </section>

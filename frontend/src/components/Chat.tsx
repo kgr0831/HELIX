@@ -269,7 +269,7 @@ function GlassBox({ events, isLive, totalTokens, elapsedMs, statusMessage, anima
 }
 
 // ── FinalAnswer ──
-function FinalAnswer({ answer, consensus, animate = true }: { answer: string; consensus: boolean; animate?: boolean }) {
+function FinalAnswer({ answer, consensus, animate = true, cached = false }: { answer: string; consensus: boolean; animate?: boolean; cached?: boolean }) {
   const leadAgent = AGENTS["gpt"];
   const agentIds = Object.keys(AGENTS);
 
@@ -281,6 +281,7 @@ function FinalAnswer({ answer, consensus, animate = true }: { answer: string; co
           <span className="title">합성된 답변</span>
           <span className="sub mono">조율: {leadAgent.name} · {leadAgent.model}</span>
         </div>
+        {cached && <span className="consensus" title="유사한 질문의 캐시된 답변" style={{ background: "color-mix(in oklch, var(--accent) 18%, transparent)" }}>⚡ 캐시</span>}
         {consensus ? (
           <span className="consensus"><Check />Consensus</span>
         ) : (
@@ -386,7 +387,7 @@ export function Thread() {
         )}
 
         {finalAnswer && allTypingDone && (
-          <FinalAnswer answer={finalAnswer.answer} consensus={finalAnswer.consensus} animate={animate} />
+          <FinalAnswer answer={finalAnswer.answer} consensus={finalAnswer.consensus} animate={animate} cached={finalAnswer.cached} />
         )}
       </div>
     </div>

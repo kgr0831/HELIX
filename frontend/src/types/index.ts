@@ -24,6 +24,7 @@ export interface FinalAnswerEvent {
   answer: string;
   consensus: boolean;
   token_usage: Record<string, number>;
+  cached?: boolean;  // 캐시에서 즉시 반환된 답변인지
 }
 
 export interface StatusEvent {

@@ -40,6 +40,8 @@ export function SettingsApiPage() {
       const created = await r.json();
       setNewKey(created.key);
       loadKeys();
+    } else {
+      window.alert("키 생성에 실패했습니다. 다시 시도해 주세요.");
     }
   };
 

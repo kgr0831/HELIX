@@ -110,6 +110,7 @@ async def stream_helix(
             "answer": hit["final_answer"],
             "consensus": hit["consensus"],
             "token_usage": {},  # 캐시 적중은 신규 토큰 소비 0
+            "cached": True,
         })
         # 캐시 적중도 대화 이력에는 저장 (복원 가능하도록)
         if user_id and conversation_id:
@@ -227,6 +228,7 @@ async def stream_helix(
                         "answer": final_answer_text,
                         "consensus": final_consensus,
                         "token_usage": final_tokens,
+                        "cached": False,
                     })
 
     except Exception as e:
