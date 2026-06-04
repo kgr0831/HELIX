@@ -26,12 +26,13 @@ async def run_consensus(
     # 캐시 조회
     q_embedding = None
     hit = None
-    try:
-        q_embedding = cache_service.embed(question)
-        async with async_session() as session:
-            hit = await cache_service.find_similar(session, q_embedding)
-    except Exception:
-        logger.exception("cache lookup failed (consensus)")
+    if cache_service.ENABLED:
+        try:
+            q_embedding = cache_service.embed(question)
+            async with async_session() as session:
+                hit = await cache_service.find_similar(session, q_embedding)
+        except Exception:
+            logger.exception("cache lookup failed (consensus)")
 
     if hit:
         answer, consensus, events = hit["final_answer"], hit["consensus"], hit["agent_events"]

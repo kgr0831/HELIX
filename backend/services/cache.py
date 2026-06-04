@@ -16,6 +16,8 @@ load_dotenv()
 
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
 SIMILARITY_THRESHOLD = float(os.getenv("CACHE_SIMILARITY_THRESHOLD", "0.9"))
+# 메모리 적은 무료 호스트에서는 CACHE_ENABLED=false로 임베딩 모델 로딩 자체를 끔
+ENABLED = os.getenv("CACHE_ENABLED", "true").lower() == "true"
 
 # fastembed 모델은 무겁게 1회만 로드 (지연 초기화)
 _model = None

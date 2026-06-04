@@ -80,13 +80,15 @@ async def stream_helix(
 
     # Phase 4: 답변 캐시 조회 (유사 질문이 있으면 토론을 건너뛰고 즉시 재생)
     q_embedding = None
-    try:
-        q_embedding = cache_service.embed(question)
-        async with async_session() as session:
-            hit = await cache_service.find_similar(session, q_embedding)
-    except Exception:
-        logger.exception("cache lookup failed")
-        hit = None
+    hit = None
+    if cache_service.ENABLED:
+        try:
+            q_embedding = cache_service.embed(question)
+            async with async_session() as session:
+                hit = await cache_service.find_similar(session, q_embedding)
+        except Exception:
+            logger.exception("cache lookup failed")
+            hit = None
 
     if hit:
         yield _make_event("status", {
