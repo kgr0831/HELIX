@@ -14,3 +14,14 @@ pandas==2.2.*
 matplotlib==3.10.*
 pytest==8.3.*
 pytest-asyncio==0.26.*
+
+# --- 서비스화 확장 (기획서 15장): DB / 인증 / 캐싱 ---
+sqlalchemy[asyncio]==2.0.*
+asyncpg==0.30.*
+alembic==1.16.*
+pgvector==0.4.*
+authlib==1.6.*
+itsdangerous==2.2.*
+python-jose[cryptography]==3.3.*
+httpx==0.28.*
+fastembed==0.7.*  # 로컬 ONNX 임베딩 (답변 캐싱, Gateway에 embeddings 미지원이라 로컬 사용)

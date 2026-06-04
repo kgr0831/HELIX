@@ -20,11 +20,18 @@ function ScrollToTop() {
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const isLoggedIn = useAuth((s) => s.isLoggedIn);
+  const loading = useAuth((s) => s.loading);
+  if (loading) return null; // 세션 확인 중에는 깜빡임 방지
   if (!isLoggedIn) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
 
 export function AppRouter() {
+  const checkAuth = useAuth((s) => s.checkAuth);
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
   return (
     <>
     <ScrollToTop />

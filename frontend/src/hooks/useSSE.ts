@@ -6,8 +6,8 @@ import { useCallback, useRef } from "react";
 import { useStore } from "../store/useStore";
 
 export function useSSE() {
-  const { setLoading, addEvent, addConsensusRound, setFinalAnswer, setError, setStatusMessage, setElapsedMs, resetThread } = useStore();
-  const abortRef = useRef<AbortController | null>(null);
+  const { setLoading, addEvent, addConsensusRound, setFinalAnswer, setError, setStatusMessage, setElapsedMs, resetThread, setActiveConversationId, setConversations } = useStore();
+  const abortRef = useRef<AbortController | null>(null); // AbortController 써서 이전 요청 취소할 수 있게 함. 연타 방지!
 
   const startQuery = useCallback(
     async (question: string) => {
@@ -19,13 +19,15 @@ export function useSSE() {
 
       resetThread();
       setLoading(true);
-      const startTime = Date.now();
+      const startTime = Date.now(); // 총 소요 시간 계산하려고 시작 시간 기록해둠
 
       try {
+        // 진행 중인 대화가 있으면 이어쓰기, 없으면 백엔드가 새 대화를 생성 (Phase 3)
+        const conversationId = useStore.getState().activeConversationId;
         const response = await fetch("/api/query", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ question }),
+          body: JSON.stringify({ question, conversation_id: conversationId }),
           signal: controller.signal,
         });
 
@@ -37,7 +39,7 @@ export function useSSE() {
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
-        let buffer = "";
+        let buffer = ""; // 청크 단위로 들어오는 데이터를 합쳐둘 버퍼. SSE는 이게 좀 귀찮음
 
         while (true) {
           const { done, value } = await reader.read();
@@ -64,13 +66,15 @@ export function useSSE() {
               }
             }
 
-            if (!eventType || !dataStr) continue;
+            if (!eventType || !dataStr) continue; // 가끔 빈 이벤트 들어오는 거 걸러내야 함
 
             try {
               const data = JSON.parse(dataStr);
 
               if (eventType === "status") {
                 setStatusMessage(data.message || "");
+              } else if (eventType === "conversation") {
+                setActiveConversationId(data.conversation_id); // 새/기존 대화 id 추적
               } else if (eventType === "agent_response") {
                 addEvent({
                   ...data,
@@ -88,7 +92,7 @@ export function useSSE() {
                 });
               } else if (eventType === "final_answer") {
                 setElapsedMs(Date.now() - startTime);
-                setFinalAnswer(data);
+                setFinalAnswer(data); // 최종 답변까지 오면 스트림 끝! 고생했다 봇들아
               } else if (eventType === "error") {
                 setError(data.message || "백엔드 오류가 발생했습니다");
               }
@@ -106,9 +110,16 @@ export function useSSE() {
         if (abortRef.current === controller) {
           abortRef.current = null;
         }
+        // 토론 종료 후 사이드바 목록 갱신 (새 대화 제목 반영)
+        try {
+          const r = await fetch("/api/conversations", { credentials: "include" });
+          if (r.ok) setConversations(await r.json());
+        } catch {
+          /* 목록 갱신 실패는 무시 */
+        }
       }
     },
-    [resetThread, setLoading, addEvent, addConsensusRound, setFinalAnswer, setError, setStatusMessage, setElapsedMs]
+    [resetThread, setLoading, addEvent, addConsensusRound, setFinalAnswer, setError, setStatusMessage, setElapsedMs, setActiveConversationId, setConversations]
   );
 
   return { startQuery };

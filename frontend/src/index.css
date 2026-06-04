@@ -226,7 +226,41 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   background: linear-gradient(135deg, var(--accent), oklch(0.7 0.16 200));
   display: grid; place-items: center;
   color: oklch(0.15 0.02 260); font-weight: 700; font-size: 11px;
+  flex-shrink: 0;
 }
+.sb-foot .avatar-img {
+  width: 24px; height: 24px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
+}
+.sb-foot .sb-foot-name {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;
+}
+.sb-logout {
+  margin-left: auto; flex-shrink: 0;
+  background: none; border: 1px solid var(--border); border-radius: 6px;
+  color: var(--fg-muted); padding: 3px 8px; font-size: 11px; cursor: pointer;
+}
+.sb-logout:hover { color: var(--fg); border-color: var(--fg-muted); }
+
+/* 사이드바 검색 + 대화 액션 (Phase B) */
+.sb-search { padding: 4px 8px 8px; }
+.sb-search input {
+  width: 100%; box-sizing: border-box;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+  color: var(--fg); font-size: 12px; padding: 6px 9px;
+}
+.sb-search input::placeholder { color: var(--fg-faint); }
+.sb-item-row { position: relative; }
+.sb-item-actions {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  display: none; gap: 2px;
+}
+.sb-item-row:hover .sb-item-actions { display: flex; }
+.sb-item-act {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+  color: var(--fg-muted); font-size: 11px; line-height: 1; padding: 3px 5px; cursor: pointer;
+}
+.sb-item-act:hover { color: var(--fg); }
+.sb-item-act.danger:hover { color: #f87171; border-color: #f87171; }
 
 /* ── Main + Thread ── */
 .main { display: flex; flex-direction: column; min-width: 0; background: var(--bg); position: relative; overflow: hidden; }

@@ -5,7 +5,7 @@
 from backend.utils.token_counter import count_tokens
 
 # 단일 Agent 시스템(SAS)의 총 토큰 예산
-SAS_BUDGET = 8000
+SAS_BUDGET = 8000  # 실험 결과 비교할 때 이 수치가 중요함. 8000 정도로 잡는 게 국룰?
 
 # 다중 Agent 시스템(MAS)의 Agent별 토큰 예산 - 합계가 SAS_BUDGET과 동일
 MAS_BUDGET_PER_AGENT = {
@@ -26,7 +26,7 @@ class BudgetController:
             self.budgets = dict(MAS_BUDGET_PER_AGENT)
         else:
             self.budgets = {"sas": SAS_BUDGET}
-        # Agent별 실제 토큰 사용량 추적
+        # Agent별 실제 토큰 사용량 추적 - 딕셔너리 컴프리헨션으로 초기화. 역시 파이썬은 이런 게 편함
         self.usage: dict[str, int] = {k: 0 for k in self.budgets}
 
     def remaining(self, agent_name: str) -> int:
@@ -36,7 +36,7 @@ class BudgetController:
     def consume(self, agent_name: str, text: str) -> int:
         """텍스트의 토큰을 소비하고 사용량을 갱신, 소비된 토큰 수 반환"""
         tokens = count_tokens(text)
-        self.usage[agent_name] = self.usage.get(agent_name, 0) + tokens
+        self.usage[agent_name] = self.usage.get(agent_name, 0) + tokens  # 여기서 바로 토큰 카운팅해서 누적함
         return tokens
 
     def check_budget(self, agent_name: str, tokens: int) -> bool:
@@ -51,9 +51,9 @@ class BudgetController:
         tokens = count_tokens(text)
         if tokens <= remaining:
             return text
-        # 예산 초과 시 토큰 단위로 잘라냄
+        # 예산 초과 시 토큰 단위로 잘라냄 - 아... 예산 초과되면 그냥 잘라버리는데, 나중에 요약해서 넣는 로직도 고민해봐야겠음
         import tiktoken
-        encoder = tiktoken.get_encoding("cl100k_base")
+        encoder = tiktoken.get_encoding("cl100k_base")  # tiktoken 직접 쓰는 부분. 모델마다 인코더 다를 수 있으니 주의!
         encoded = encoder.encode(text)[:remaining]
         return encoder.decode(encoded)
 

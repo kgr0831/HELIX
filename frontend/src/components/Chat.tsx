@@ -12,7 +12,7 @@ import type { AgentInfo } from "./agents";
 import { useStore } from "../store/useStore";
 import type { AgentEvent } from "../types";
 
-// ── 시간 포매팅 ──
+// ── 시간 포매팅 ── - 밀리초 단위를 보기 좋게 00:00.0 형식으로 바꿈. 소수점 한자리까지 나와야 멋있음
 function formatTime(ms: number): string {
   const sec = ms / 1000;
   const min = Math.floor(sec / 60);
@@ -41,7 +41,7 @@ function StreamingText({ text, speed = 12, className = "thinking-text", onComple
       return;
     }
 
-    const step = Math.max(2, Math.floor(textRef.current.length / 50));
+    const step = Math.max(2, Math.floor(textRef.current.length / 50)); // 글자 수에 맞춰서 타이핑 속도 조절하는 로직. 너무 길면 좀 빨리 나오게
     const id = setTimeout(() => setCharCount(c => Math.min(textRef.current.length, c + step)), speed);
     return () => clearTimeout(id);
   }, [charCount, speed, onComplete]);
@@ -86,7 +86,7 @@ interface TurnData {
 }
 
 // ── Turn: 개별 에이전트 사고 과정 ──
-function Turn({ turn }: { turn: TurnData }) {
+function Turn({ turn, animate = true }: { turn: TurnData; animate?: boolean }) {
   const a: AgentInfo | undefined = AGENTS[turn.agentId];
   if (!a) return null;
 
@@ -106,7 +106,9 @@ function Turn({ turn }: { turn: TurnData }) {
           )}
         </div>
         <div className="turn-text">
-          <StreamingText text={turn.content} speed={50} />
+          {animate
+            ? <StreamingText text={turn.content} speed={50} />
+            : <div className="thinking-text"><Markdown>{turn.content}</Markdown></div>}
         </div>
       </div>
     </div>
@@ -148,7 +150,7 @@ function StatusIndicator({ message }: { message: string }) {
 
 const PARALLEL_AGENT_IDS = ["flash", "sonar", "grok"];
 
-// ── 이벤트 → 라운드별 그룹화 ──
+// ── 이벤트 → 라운드별 그룹화 ── - 백엔드에서 온 생(raw) 이벤트를 화면에 그리기 좋게 라운드별로 묶어줌. 여기가 제일 복잡했음
 function groupByRound(events: AgentEvent[], isLive: boolean): { roundId: number; label: string; turns: TurnData[] }[] {
   const groups: { roundId: number; label: string; turns: TurnData[] }[] = [];
   let currentRound = 0;
@@ -203,9 +205,10 @@ interface GlassBoxProps {
   totalTokens: number;
   elapsedMs: number;
   statusMessage: string;
+  animate: boolean;
 }
 
-function GlassBox({ events, isLive, totalTokens, elapsedMs, statusMessage }: GlassBoxProps) {
+function GlassBox({ events, isLive, totalTokens, elapsedMs, statusMessage, animate }: GlassBoxProps) {
   const [expanded, setExpanded] = useState(true);
 
   const rounds = groupByRound(events, isLive);
@@ -216,7 +219,7 @@ function GlassBox({ events, isLive, totalTokens, elapsedMs, statusMessage }: Gla
 
   return (
     <div className="glassbox">
-      <div className={`gb-head ${expanded ? "expanded" : ""}`} onClick={() => setExpanded(e => !e)}>
+      <div className={`gb-head ${expanded ? "expanded" : ""}`} onClick={() => setExpanded(e => !e)}> {/* 클릭하면 접었다 폈다 할 수 있게 만듬. 사고 과정 보기 싫은 사람들을 위해 */}
         <div className="gb-title"><Atom /> Glass Box</div>
         {isLive ? (
           <span className="gb-status pulse">{statusMessage}</span>
@@ -245,7 +248,7 @@ function GlassBox({ events, isLive, totalTokens, elapsedMs, statusMessage }: Gla
               <span style={{ color: "var(--fg-dim)", textTransform: "none", letterSpacing: 0 }}>· {r.label}</span>
             </div>
             {r.turns.map((t) => (
-              <Turn key={t.id} turn={t} />
+              <Turn key={t.id} turn={t} animate={animate} />
             ))}
             {isLive && r.label === "분석 · 디스패치" && r.turns.length === 0 && (
               <PlaceholderTurn agentId="gpt" label="역할 분배 중..." />
@@ -266,7 +269,7 @@ function GlassBox({ events, isLive, totalTokens, elapsedMs, statusMessage }: Gla
 }
 
 // ── FinalAnswer ──
-function FinalAnswer({ answer, consensus }: { answer: string; consensus: boolean }) {
+function FinalAnswer({ answer, consensus, animate = true }: { answer: string; consensus: boolean; animate?: boolean }) {
   const leadAgent = AGENTS["gpt"];
   const agentIds = Object.keys(AGENTS);
 
@@ -285,7 +288,7 @@ function FinalAnswer({ answer, consensus }: { answer: string; consensus: boolean
         )}
       </div>
       <div className="final-text">
-        <StreamingText text={answer} className="" />
+        {animate ? <StreamingText text={answer} className="" /> : <Markdown>{answer}</Markdown>}
       </div>
       <div className="final-foot">
         <div className="agents-used">
@@ -326,11 +329,12 @@ function EmptyState() {
 
 // ── Thread ──
 export function Thread() {
-  const { question, isLoading, events, finalAnswer, error, elapsedMs, statusMessage } = useStore();
+  const { question, isLoading, events, finalAnswer, error, elapsedMs, statusMessage, isRestored } = useStore();
   const threadRef = useRef<HTMLDivElement>(null);
 
   const [allTypingDone, setAllTypingDone] = useState(false);
   const totalTokens = events.reduce((sum, e) => sum + (e.token_count ?? 0), 0);
+  const animate = !isRestored; // 복원된 대화는 타이핑 효과 없이 즉시 표시
 
   useEffect(() => {
     if (isLoading) {
@@ -338,10 +342,15 @@ export function Thread() {
       return;
     }
     if (!isLoading && finalAnswer) {
+      // 복원 시에는 지연 없이 즉시 노출, 라이브 완료 시에만 약간의 딜레이
+      if (isRestored) {
+        setAllTypingDone(true);
+        return;
+      }
       const timer = setTimeout(() => setAllTypingDone(true), 600);
       return () => clearTimeout(timer);
     }
-  }, [isLoading, finalAnswer]);
+  }, [isLoading, finalAnswer, isRestored]);
 
   useEffect(() => {
     if (threadRef.current) {
@@ -372,11 +381,12 @@ export function Thread() {
             totalTokens={totalTokens}
             elapsedMs={elapsedMs}
             statusMessage={statusMessage}
+            animate={animate}
           />
         )}
 
         {finalAnswer && allTypingDone && (
-          <FinalAnswer answer={finalAnswer.answer} consensus={finalAnswer.consensus} />
+          <FinalAnswer answer={finalAnswer.answer} consensus={finalAnswer.consensus} animate={animate} />
         )}
       </div>
     </div>
@@ -410,7 +420,7 @@ export function Composer({ onSend, disabled }: ComposerProps) {
     <div className="composer">
       <div className="composer-inner">
         <textarea
-          placeholder="질문을 입력하세요. HELIX가 4개 모델을 호출해 토론하고 합성합니다…"
+          placeholder="질문을 입력하세요. HELIX가 4개 모델을 호출해 토론하고 합성합니다…" // 텍스트에리어 높이 자동 조절 기능 넣고 싶었는데 시간 부족... 일단 1줄 고정
           value={val}
           onChange={e => setVal(e.target.value)}
           onKeyDown={handleKeyDown}

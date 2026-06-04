@@ -45,7 +45,7 @@ def test_should_continue_max_rounds():
 def test_should_continue_no_consensus():
     """불일치 + 라운드 여유 있을 때 재토론으로 라우팅되는지 검증"""
     state = _make_state(consensus=False, round_number=1, max_rounds=3)
-    assert should_continue(state) == "parallel_step"
+    assert should_continue(state) == "rediscuss_step"
 
 
 @pytest.mark.integration
