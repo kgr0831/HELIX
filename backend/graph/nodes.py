@@ -11,11 +11,36 @@ from backend.graph.state import CrossCheckState
 from backend.utils.budget_controller import BudgetController
 from backend.utils.context_compressor import compress_discussion_log
 
-# 4개 Agent 인스턴스 생성 (이기종: OpenAI / Google / Perplexity / xAI)
+# 4개 Agent 인스턴스 생성 (이기종: OpenAI / Google / Perplexity / xAI) - 에이전트들 미리 생성해둠. 부를 때마다 만들면 느리니까
 leader = LeaderAgent()
 researcher = ResearcherAgent()
 logician = LogicianAgent()
 critic = CriticAgent()
+
+
+# 사용자 설정(언어/어조)을 프롬프트 말미에 주입하는 지시문 생성 (Phase A: settings 실동작)
+_LANG_DIRECTIVE = {
+    "en": "Respond only in English, ignoring any earlier language instruction.",
+    "ja": "日本語で回答してください。",
+    "auto": "질문과 동일한 언어로 답변하세요.",
+}
+_TONE_DIRECTIVE = {
+    "analytical": "분석적이고 보수적인 어조로, 근거를 중시해 답하세요.",
+    "creative": "창의적이고 발산적인 어조로 답하세요.",
+    "concise": "간결하게 핵심만 불릿으로 답하세요.",
+}
+
+
+def _style_directive(state: CrossCheckState) -> str:
+    """언어/어조 설정을 반영한 추가 지시문 (기본값이면 빈 문자열)"""
+    parts = []
+    lang = state.get("language", "ko")
+    if lang in _LANG_DIRECTIVE:
+        parts.append(_LANG_DIRECTIVE[lang])
+    tone = state.get("tone", "balanced")
+    if tone in _TONE_DIRECTIVE:
+        parts.append(_TONE_DIRECTIVE[tone])
+    return ("\n\n" + " ".join(parts)) if parts else ""
 
 
 async def leader_plan_node(state: CrossCheckState) -> dict:
@@ -32,11 +57,11 @@ async def leader_plan_node(state: CrossCheckState) -> dict:
     )
 
     response = await leader.generate(prompt, max_tokens=remaining)
-    # 상태 업데이트: 계획, 라운드 번호, 토큰 사용량 초기화
+    # 상태 업데이트: 계획, 라운드 번호, 토큰 사용량 초기화 - 첫 번째 라운드 시작!
     return {
         "leader_plan": response.content,
         "round_number": 1,
-        "max_rounds": 5,
+        "max_rounds": state.get("max_rounds", 5),  # 사용자 설정(라운드 수) 반영 — 하드코딩 제거
         "token_usage": {"leader": response.token_count},
         "discussion_log": [{
             "round_number": 0,
@@ -74,12 +99,13 @@ async def _call_specific_agent(state: CrossCheckState, agent, role_instruction: 
     if context:
         prompt += f"\n이전 토론 요약:\n{context}\n"
     prompt += f"\n{role_instruction}"
+    prompt += _style_directive(state)
 
     budget = BudgetController(mode="mas")
     budget.usage = dict(token_usage)
     remaining = budget.remaining(agent.role)
 
-    if remaining <= 0:
+    if remaining <= 0:  # 예산 다 쓰면 더 이상 말 못하게 막음. 칼같음
         exhausted_content = "[토큰 예산 소진으로 응답을 생성하지 못했습니다]"
         return {
             "agent_responses": {
@@ -158,9 +184,11 @@ async def leader_synthesize_node(state: CrossCheckState) -> dict:
         f"- 표현 방식이나 상세 수준에 대한 선호 차이\n\n"
         f"합의가 되었다면 에이전트들의 정보를 종합하여 사용자 질문에 대한 최종 답변을 작성하세요.\n"
         f"합의가 안 되었다면 어떤 핵심 사실이 서로 모순되는지 구체적으로 설명하세요.\n\n"
-        f"반드시 아래 JSON 형식으로만 답변하세요:\n"
+        f"반드시 아래 JSON 형식으로만 답변하세요:\n" # JSON으로 달라고 해도 가끔 텍스트 섞어줘서 정규식으로 뽑아냄... 후...
         f"{{\"consensus\": true/false, \"reasoning\": \"판단 근거\", \"answer\": \"종합 답변 또는 모순 요약\"}}"
     )
+    # answer 필드의 언어/어조에 사용자 설정 반영
+    prompt += _style_directive(state)
 
     response = await leader.generate(prompt, max_tokens=remaining)
     leader_total = token_usage.get("leader", 0) + response.token_count
@@ -219,8 +247,9 @@ async def final_answer_node(state: CrossCheckState) -> dict:
             f"토론 내용:\n{discussion_summary}\n\n"
             f"위 토론에서 확인된 사실과 합의된 부분을 중심으로, "
             f"사용자 질문에 대한 최종 답변을 직접 작성하세요.\n"
-            f"답변만 작성하세요. '합의가 안 됐다'는 언급은 하지 마세요."
+            f"답변만 작성하세요. '합의가 안 됐다'는 언급은 하지 마세요." # 끝까지 합의 안되면 리더가 그냥 결론 내버림. 이게 바로 리더십
         )
+        prompt += _style_directive(state)
 
         response = await leader.generate(prompt, max_tokens=1000)
         answer = response.content

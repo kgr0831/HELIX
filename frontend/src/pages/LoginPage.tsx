@@ -1,49 +1,12 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { HelixMark } from "../components/Logo";
 import { useAuth } from "../store/useAuth";
 import s from "./LoginPage.module.css";
 
-type Mode = "login" | "signup";
-
-const COPY = {
-  login: {
-    title: "계정에 로그인",
-    sub: "여러 모델의 합의를 한 번의 질문으로.",
-    submit: "로그인 →",
-    foot: "계정이 없으신가요?",
-    footAction: "회원가입",
-    pw: "current-password" as const,
-  },
-  signup: {
-    title: "HELIX 계정 만들기",
-    sub: "14일 Pro 무료 체험. 신용카드 불필요.",
-    submit: "계정 만들기 →",
-    foot: "이미 계정이 있나요?",
-    footAction: "로그인",
-    pw: "new-password" as const,
-  },
-};
-
 export function LoginPage() {
-  const [mode, setMode] = useState<Mode>("login");
-  const [email, setEmail] = useState("");
-  const [pw, setPw] = useState("");
-  const [error, setError] = useState("");
-  const navigate = useNavigate();
-  const login = useAuth((s) => s.login);
-  const c = COPY[mode];
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    const ok = login(email, pw);
-    if (ok) {
-      navigate("/chat");
-    } else {
-      setError("아이디 또는 비밀번호가 올바르지 않습니다.");
-    }
-  };
+  const loginWithGoogle = useAuth((st) => st.loginWithGoogle);
+  const [params] = useSearchParams();
+  const error = params.get("error");
 
   return (
     <div className={s.auth} data-theme="dark">
@@ -82,26 +45,17 @@ export function LoginPage() {
           </span>
         </div>
 
-        <div className={s.tabs}>
-          <button
-            className={mode === "login" ? s.tabActive : s.tab}
-            onClick={() => setMode("login")}
-          >
-            로그인
-          </button>
-          <button
-            className={mode === "signup" ? s.tabActive : s.tab}
-            onClick={() => setMode("signup")}
-          >
-            회원가입
-          </button>
-        </div>
+        <h2>HELIX 시작하기</h2>
+        <p className={s.sub}>Google 계정으로 로그인하거나 가입하세요.</p>
 
-        <h2>{c.title}</h2>
-        <p className={s.sub}>{c.sub}</p>
+        {error && (
+          <div className={s.error}>
+            로그인에 실패했습니다. 다시 시도해 주세요.
+          </div>
+        )}
 
         <div className={s.oauth}>
-          <button className={s.oauthBtn}>
+          <button className={s.oauthBtn} onClick={loginWithGoogle}>
             <span className={s.oauthIcon}>
               <svg viewBox="0 0 24 24" width="18" height="18">
                 <path fill="#4285F4" d="M22.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.4h5.9c-.3 1.4-1.1 2.5-2.2 3.3v2.7h3.5c2.1-1.9 3.3-4.8 3.3-8.1z" />
@@ -112,41 +66,6 @@ export function LoginPage() {
             </span>
             <span className={s.oauthGrow}>Google로 계속하기</span>
           </button>
-          <button className={s.oauthBtn}>
-            <span className={s.oauthIcon}>
-              <svg viewBox="0 0 16 16" width="18" height="18">
-                <path fill="currentColor" d="M8 0a8 8 0 0 0-2.5 15.6c.4.1.5-.2.5-.4v-1.4c-2.2.5-2.7-1.1-2.7-1.1-.4-1-.9-1.2-.9-1.2-.7-.5.1-.5.1-.5.8.1 1.2.8 1.2.8.7 1.2 1.9.9 2.4.7.1-.5.3-.9.5-1.1-1.8-.2-3.6-.9-3.6-3.9 0-.9.3-1.6.8-2.1-.1-.2-.4-1 .1-2.1 0 0 .7-.2 2.2.8.6-.2 1.3-.3 2-.3s1.4.1 2 .3c1.5-1 2.2-.8 2.2-.8.4 1.1.2 1.9.1 2.1.5.5.8 1.2.8 2.1 0 3-1.8 3.7-3.6 3.9.3.2.5.7.5 1.5v2.2c0 .2.1.5.5.4A8 8 0 0 0 8 0z" />
-              </svg>
-            </span>
-            <span className={s.oauthGrow}>GitHub로 계속하기</span>
-          </button>
-        </div>
-
-        <div className={s.divider}>또는</div>
-
-        <form onSubmit={handleSubmit}>
-          <div className={s.field}>
-            <label htmlFor="email">이메일</label>
-            <input id="email" type="text" placeholder="you@company.com" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-          </div>
-          <div className={s.field}>
-            <label htmlFor="pw">
-              비밀번호
-              {mode === "login" && <a href="#">비밀번호 찾기</a>}
-            </label>
-            <input id="pw" type="password" placeholder="••••••••" autoComplete={c.pw} value={pw} onChange={(e) => setPw(e.target.value)} />
-          </div>
-
-          {error && <div className={s.error}>{error}</div>}
-
-          <button type="submit" className={s.authSubmit}>{c.submit}</button>
-        </form>
-
-        <div className={s.authFoot}>
-          {c.foot}{" "}
-          <a onClick={() => setMode(mode === "login" ? "signup" : "login")}>
-            {c.footAction}
-          </a>
         </div>
 
         <p className={s.tos}>

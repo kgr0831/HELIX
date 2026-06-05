@@ -32,7 +32,7 @@ async def test_leader_agent():
     """Leader Agent (GPT-5.4-mini) 실제 API 호출 테스트"""
     from backend.agents.leader import LeaderAgent
     agent = LeaderAgent()
-    response = await agent.generate("Say hello.", max_tokens=50)
+    response = await agent.generate("Say hello in one short sentence.", max_tokens=300)
     assert response.content       # 응답 내용이 비어있지 않은지
     assert response.token_count > 0  # 토큰 수가 양수인지
     assert response.latency_ms > 0   # 지연시간이 측정되었는지
@@ -44,7 +44,7 @@ async def test_researcher_agent():
     """Researcher Agent (Gemini 3 Flash) 실제 API 호출 테스트"""
     from backend.agents.researcher import ResearcherAgent
     agent = ResearcherAgent()
-    response = await agent.generate("Say hello.", max_tokens=50)
+    response = await agent.generate("Say hello in one short sentence.", max_tokens=300)
     assert response.content
     assert response.token_count > 0
 
@@ -55,7 +55,7 @@ async def test_logician_agent():
     """Logician Agent (Sonar Reasoning Pro) 실제 API 호출 테스트"""
     from backend.agents.logician import LogicianAgent
     agent = LogicianAgent()
-    response = await agent.generate("Say hello.", max_tokens=50)
+    response = await agent.generate("Say hello in one short sentence.", max_tokens=300)
     assert response.content
     assert response.token_count > 0
 
@@ -66,6 +66,6 @@ async def test_critic_agent():
     """Critic Agent (Grok 3 Mini) 실제 API 호출 테스트"""
     from backend.agents.critic import CriticAgent
     agent = CriticAgent()
-    response = await agent.generate("Say hello.", max_tokens=50)
+    response = await agent.generate("Say hello in one short sentence.", max_tokens=300)
     assert response.content
     assert response.token_count > 0

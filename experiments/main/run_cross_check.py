@@ -8,7 +8,7 @@ import sys
 import time
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # 프로젝트 루트 경로 추가해줘야 모듈 임포트가 됨. 이거 안해서 한참 헤맴
 
 from backend.graph.builder import build_graph
 from experiments.eval.metrics import evaluate_batch
@@ -21,7 +21,7 @@ async def run_cross_check(dataset_path: str, max_samples: int = 50):
 
     # MuSiQue 데이터셋 로드
     with open(dataset_path) as f:
-        samples = [json.loads(line) for line in f][:max_samples]
+        samples = [json.loads(line) for line in f][:max_samples]  # 샘플 너무 많이 돌리면 토큰 아까우니까 max_samples로 제한함
 
     predictions = []
     ground_truths = []
@@ -42,12 +42,12 @@ async def run_cross_check(dataset_path: str, max_samples: int = 50):
             "discussion_log": [],
             "consensus": False,
             "round_number": 0,
-            "max_rounds": 3,  # 최대 3라운드 토론
+            "max_rounds": 3,  # 최대 3라운드 토론 - 라운드 수 늘리면 성능은 좋아지는데 돈이 많이 나감... 일단 3으로 고정
             "final_answer": "",
             "token_usage": {},
         })
 
-        latency = (time.perf_counter() - start) * 1000
+        latency = (time.perf_counter() - start) * 1000  # latency_ms 단위로 저장. 꽤 걸릴 듯?
         # 전체 Agent의 토큰 사용량 합산
         tokens = sum(result.get("token_usage", {}).values())
 
@@ -70,7 +70,7 @@ async def run_cross_check(dataset_path: str, max_samples: int = 50):
         "count": len(samples),
     }
 
-    # 결과 JSON 저장
+    # 결과 JSON 저장 - 결과물은 results 폴더에 모아둠. 나중에 표로 정리해야 됨
     output_path = Path(__file__).resolve().parents[1] / "results" / "C5_cross_check.json"
     output_path.parent.mkdir(exist_ok=True)
     with open(output_path, "w") as f:

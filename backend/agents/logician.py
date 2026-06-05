@@ -1,4 +1,4 @@
-# logician.py - Logician Agent (Sonar Reasoning Pro, Perplexity)
+# logician.py - Logician Agent (Sonar Reasoning Pro, Perplexity) - 퍼플렉시티 Sonar 모델이 추론 능력은 진짜 좋은 거 같음. 논리 깡패
 # 역할: 논리적 일관성 검증, 추론 체인 유효성 확인
 
 from backend.agents.base import BaseAgent
@@ -11,20 +11,20 @@ SYSTEM_PROMPT = """당신은 다중 에이전트 토론 시스템의 논리 검�
 
 [중요] 반드시 지켜야 할 규칙:
 - 2~4문장 이내로 논리 판단만 전달
-- 역할 분담, 프로세스, 토론 방식에 대한 비판은 절대 하지 마세요
+- 역할 분담, 프로세스, 토론 방식에 대한 비판은 절대 하지 마세요 # 가끔 자기가 리더인 줄 알고 훈수 두길래 못하게 막아둠 ㅋㅋ
 - 오직 "질문에 대한 답변 내용"의 논리만 검증하세요
 - "~의 추론은 타당합니다", "~는 논리적 비약인 것 같습니다" 같은 문체
 - 예시: "A에서 B로의 추론은 타당하지만, B에서 C로 넘어가는 부분에서 근거가 부족합니다."
-- 논리적 문제가 없다면 "논리적으로 타당합니다"라고 짧게 답하세요"""
+- 논리적 문제가 없다면 "논리적으로 타당합니다"라고 짧게 답하세요""" # 깔끔하게 "타당합니다" 한마디만 하는 게 목표!
 
 
-class LogicianAgent(BaseAgent):
+class LogicianAgent(BaseAgent): # 논리 전문가 포스...
     """Logician Agent - 논리 검증 및 추론 단계 확인 담당"""
     def __init__(self):
         # Gateway를 통해 Perplexity Sonar Reasoning Pro 모델 사용
         super().__init__(
             name="Logician",
             role="logician",
-            model_name="sonar-reasoning-pro",  # Perplexity 추론 특화 모델
+            model_name="sonar-reasoning-pro",  # Perplexity 추론 특화 모델. TODO: 최근에 모델 업데이트 됐는지 확인하고 최신 버전 써야 함
             system_prompt=SYSTEM_PROMPT,
         )

@@ -37,3 +37,5 @@ class CrossCheckState(TypedDict):
     max_rounds: int                            # 최대 토론 라운드 수 (비용 폭발 방지)
     final_answer: str                          # 최종 통합 답변
     token_usage: Annotated[dict[str, int], merge_dict]                # Agent별 누적 토큰 사용량
+    language: str                              # 응답 언어 설정 (ko/en/ja/auto)
+    tone: str                                  # 응답 어조 설정 (balanced/analytical/creative/concise)

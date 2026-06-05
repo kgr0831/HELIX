@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://helix-backend-21qx.onrender.com/api/:path*"
+    }
+  ]
+}

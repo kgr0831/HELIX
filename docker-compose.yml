@@ -1,0 +1,25 @@
+# docker-compose.yml - HELIX 로컬 인프라
+# PostgreSQL 16 + pgvector (기획서 15장: DB 연동 / 답변 캐싱)
+# 실행: docker compose up -d
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: helix-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: helix
+      POSTGRES_PASSWORD: helix
+      POSTGRES_DB: helix
+    ports:
+      - "5432:5432"
+    volumes:
+      - helix_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U helix -d helix"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  helix_pgdata:
